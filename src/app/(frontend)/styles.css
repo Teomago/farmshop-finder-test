@@ -1,0 +1,12 @@
+@import 'tailwindcss';
+@plugin './hero.ts';
+@source '../../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-mono: 'Roboto Mono', monospace;
+  --carrot: #D97706;
+  --squash: #FBBF24;
+  --barn: #2F3E46;
+  --bone: #FCF8F3;
+}
