@@ -12,6 +12,11 @@ import config from '@/payload.config'
 import './styles.css'
 import Hero from './hero'
 
+export const metadata = {
+  description: 'An app to find local farmshops.',
+  title: 'Farmshop Finder',
+}
+
 export default async function HomePage() {
   const headers = await getHeaders()
   const payloadConfig = await config
@@ -23,7 +28,10 @@ export default async function HomePage() {
   return (
     <>
       <div className="flex flex-col justify-center px-6">
-        <Card isFooterBlurred className="w-full h-[300px] sm:h-[475px] md:h-[650px] md:m-auto">
+        <Card
+          isFooterBlurred
+          className="w-full h-[300px] sm:h-[475px] md:h-[650px] xl:w-[calc(1280px*0.9)] 2xl:w-[calc(1536px*0.9)] md:m-auto"
+        >
           <CardHeader className="absolute z-10 top-1 flex-col items-start">
             <p className="text-tiny text-white/90 uppercase font-bold md:text-2xl">
               Your Farm Here
@@ -34,7 +42,7 @@ export default async function HomePage() {
             radius="none"
             alt="Card example background"
             className="z-0 w-full h-full scale-125 -translate-y-6 object-cover"
-            src="https://images.unsplash.com/photo-1563514227147-6d2ff665a6a0?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+            src="https://images.pexels.com/photos/4818015/pexels-photo-4818015.jpeg?_gl=1*mnulyk*_ga*MTkzMTgxMzM2NC4xNzU0NTY0Nzc4*_ga_8JE65Q40S6*czE3NTQ1NjQ3NzckbzEkZzEkdDE3NTQ1NjQ4MTYkajIxJGwwJGgw"
           />
           <CardFooter className="absolute bg-white/30 bottom-0 border-t-1 border-zinc-100/50 z-10 justify-between">
             <div>

@@ -52,7 +52,7 @@ export default function NavbarCP() {
   ]
 
   return (
-    <Navbar onMenuOpenChange={setIsMenuOpen} className="bg-[var(--carrot)]">
+    <Navbar onMenuOpenChange={setIsMenuOpen} className="bg-[var(--carrot)]/90">
       <NavbarContent>
         <NavbarMenuToggle
           aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
