@@ -30,7 +30,7 @@ export default async function HomePage() {
       <div className="flex flex-col justify-center px-6">
         <Card
           isFooterBlurred
-          className="w-full h-[300px] sm:h-[475px] md:h-[650px] xl:w-[calc(1280px*0.9)] 2xl:w-[calc(1536px*0.9)] md:m-auto"
+          className="w-full h-[calc(800px*0.85)] sm:h-[475px] md:h-[650px] xl:w-[calc(1280px*0.9)] 2xl:w-[calc(1536px*0.9)] md:m-auto"
         >
           <CardHeader className="absolute z-10 top-1 flex-col items-start">
             <p className="text-tiny text-white/90 uppercase font-bold md:text-2xl">
@@ -54,6 +54,32 @@ export default async function HomePage() {
             </Button>
           </CardFooter>
         </Card>
+        <div className="flex flex-col xl:w-[calc(1280px*0.9)] 2xl:w-[calc(1536px*0.9)] md:flex-row w-full justify-between items-center gap-3 mt-6">
+          <div className="w-full">
+            <HeroUiImage
+              isBlurred
+              alt="HeroUI Album Cover1"
+              className="w-[1000px] h-[350px] object-cover"
+              src="https://images.unsplash.com/photo-1533582802457-6f016a669eca?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+            />
+          </div>
+          <div className="w-full">
+            <HeroUiImage
+              isBlurred
+              alt="HeroUI Album Cover1"
+              className="w-[1000px] h-[350px] object-cover"
+              src="https://images.unsplash.com/photo-1589738284462-b601bb7d6f51?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+            />
+          </div>
+          <div className="w-full">
+            <HeroUiImage
+              isBlurred
+              alt="HeroUI Album Cover1"
+              className="w-[1000px] h-[350px] object-cover"
+              src="https://images.unsplash.com/photo-1615281775285-219509089dc1?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+            />
+          </div>
+        </div>
       </div>
     </>
   )

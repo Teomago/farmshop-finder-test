@@ -263,4 +263,83 @@ To enable email sending (e.g., password reset, notifications) using Brevo, follo
 
 With this setup, all emails sent by Payload will use your Brevo account. Make sure not to commit your real API keys to version control.
 
+## S3 Storage Setup
+
+To configure S3 storage for media uploads in this project, follow these steps:
+
+1. **Install the S3 Storage Plugin**:
+   Ensure the `@payloadcms/storage-s3` package is installed. This is already included in the project dependencies.
+
+2. **Set Up Environment Variables**:
+   Add the following variables to your `.env` file:
+   ```env
+   S3_BUCKET=<your-s3-bucket-name>
+   S3_ACCESS_KEY_ID=<your-access-key-id>
+   S3_SECRET_ACCESS_KEY=<your-secret-access-key>
+   S3_REGION=<your-region>
+   S3_ENDPOINT=<optional-custom-endpoint>
+   ```
+
+3. **Update Payload Configuration**:
+   The `payload.config.ts` file is already configured to use the S3 storage plugin. Ensure the following plugin configuration exists:
+   ```typescript
+   import { s3Storage } from '@payloadcms/storage-s3';
+
+   s3Storage({
+     collections: {
+       media: {
+         prefix: 'media',
+       },
+     },
+     bucket: process.env.S3_BUCKET,
+     config: {
+       credentials: {
+         accessKeyId: process.env.S3_ACCESS_KEY_ID,
+         secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+       },
+       region: process.env.S3_REGION,
+       endpoint: process.env.S3_ENDPOINT,
+       forcePathStyle: true, // Required for some S3-compatible services
+     },
+   });
+   ```
+
+4. **Test the Integration**:
+   Upload a media file through the Payload admin panel and verify it appears in your S3 bucket.
+
+## Front-End and Payload Integration
+
+To integrate Payload CMS with the front-end:
+
+1. **Fetch Global Data**:
+   Use the `getPayload` function to fetch global data, such as the `header` and `footer` configurations. Example:
+   ```typescript
+   import { getPayload } from 'payload';
+   import config from '@payload-config';
+
+   const payload = await getPayload({ config });
+   const header = await payload.findGlobal({ slug: 'header', depth: 1 });
+   ```
+
+2. **Pass Data to Components**:
+   Pass the fetched data as props to your React components. For example, the `NavbarCP` component:
+   ```tsx
+   <NavbarCP
+     title={header.title}
+     logoUrl={header.logo.url}
+     logoAlt={header.logo.alt}
+     navItems={header.nav.map((item) => ({
+       id: item.id,
+       label: item.label,
+       link: item.link,
+     }))}
+   />
+   ```
+
+3. **Dynamic Rendering**:
+   Ensure components like `NavbarCP` and `Footer` dynamically render content based on the data passed from Payload.
+
+4. **Test the Integration**:
+   Run the application locally and verify that the header, footer, and other dynamic content are rendered correctly.
+
 

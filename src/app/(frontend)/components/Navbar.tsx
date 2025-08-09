@@ -13,6 +13,7 @@ import {
 import { Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from '@heroui/dropdown'
 import { Link } from '@heroui/link'
 import { Button } from '@heroui/button'
+import Image from 'next/image'
 
 import {
   AcmeLogo,
@@ -25,7 +26,16 @@ import {
   TagUser,
 } from '../icons/icons'
 
-export default function NavbarCP() {
+export default function NavbarCP({
+  title,
+  logoUrl,
+  logoAlt,
+  navItems,
+}: {
+  title: string
+  logoUrl: string
+  logoAlt: string
+}) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
 
   const icons = {
@@ -59,8 +69,10 @@ export default function NavbarCP() {
           className="sm:hidden"
         />
         <NavbarBrand>
-          <AcmeLogo />
-          <p className="font-bold text-inherit">ACME</p>
+          {/**Logo de la página */}
+          <Image src={logoUrl} alt={logoAlt} width={50} height={50} className="" />
+          {/**Nombre de la página */}
+          <p className="font-bold text-inherit">{title}</p>
         </NavbarBrand>
       </NavbarContent>
 
@@ -122,16 +134,13 @@ export default function NavbarCP() {
             </DropdownItem>
           </DropdownMenu>
         </Dropdown>
-        <NavbarItem isActive>
-          <Link aria-current="page" href="#">
-            Customers
-          </Link>
-        </NavbarItem>
-        <NavbarItem>
-          <Link color="foreground" href="#">
-            Integrations
-          </Link>
-        </NavbarItem>
+        {navItems.map((item) => (
+          <NavbarItem key={item.id}>
+            <Link href={item.link} className="text-white">
+              {item.label}
+            </Link>
+          </NavbarItem>
+        ))}
       </NavbarContent>
 
       <NavbarContent justify="end">

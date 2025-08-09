@@ -11,7 +11,6 @@ export default function Footer() {
       <div className="w-full max-w-5xl flex flex-col items-center gap-4 py-6 px-6 md:grid md:grid-cols-5 md:gap-4">
         {/* Left column: Site info and links */}
         <div className="flex flex-col gap-2 items-center order-2 md:order-none md:items-start md:col-start-1 md:row-start-1">
-          <span className="font-bold text-lg">SiteName</span>
           <a href="#about" className="text-sm hover:underline">
             About
           </a>
