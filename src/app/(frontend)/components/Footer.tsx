@@ -9,7 +9,7 @@ export default function Footer({
   logoAlt,
   copyright,
   siteLinks,
-  socialLinks,
+  socialLinks: _socialLinks,
   policies,
 }: {
   copyright: string

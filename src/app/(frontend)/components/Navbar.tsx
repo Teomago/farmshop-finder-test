@@ -14,11 +14,9 @@ import { Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from '@heroui/d
 import { Link } from '@heroui/link'
 import { Button } from '@heroui/button'
 import Image from 'next/image'
-import { Avatar } from '@heroui/avatar'
 import { User } from '@heroui/user'
 
 import {
-  AcmeLogo,
   ChevronDown,
   Scale,
   Lock,

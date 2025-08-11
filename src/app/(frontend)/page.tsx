@@ -1,8 +1,6 @@
 import { headers as getHeaders } from 'next/headers.js'
-import Image from 'next/image'
 import { getPayload } from 'payload'
 import React from 'react'
-import { fileURLToPath } from 'url'
 
 import { Image as HeroUiImage } from '@heroui/image'
 import { Card, CardHeader, CardFooter } from '@heroui/card'
@@ -10,9 +8,6 @@ import { Button } from '@heroui/button'
 
 import config from '@/payload.config'
 import './styles.css'
-import Hero from './hero'
-
-import Home from './components/Home'
 
 export const metadata = {
   description: 'An app to find local farmshops.',
@@ -21,9 +16,7 @@ export const metadata = {
 
 export default async function HomePage() {
   const payload = await getPayload({ config })
-  const headers = await getHeaders()
-  const { user } = await payload.auth({ headers })
-  const fileURL = `vscode://file/${fileURLToPath(import.meta.url)}`
+  const _headers = await getHeaders()
 
   const homeConfig = await payload.findGlobal({
     slug: 'home-config',
