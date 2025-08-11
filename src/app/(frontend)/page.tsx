@@ -39,8 +39,6 @@ export default async function HomePage() {
   })
   const activeHome = homeData.docs.find((doc) => doc.heroinfo === configHome)
 
-  console.log(activeHome)
-
   return (
     <>
       <div className="flex flex-col justify-center px-6">
