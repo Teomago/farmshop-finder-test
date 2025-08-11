@@ -31,8 +31,8 @@ export default async function FooterServer() {
   return (
     <>
       <Footer
-        logoUrl={footer.logo.url}
-        logoAlt={footer.logo.alt}
+        logoUrl={typeof footer.logo === 'object' && footer.logo?.url ? footer.logo.url : ''}
+        logoAlt={typeof footer.logo === 'object' && footer.logo?.alt ? footer.logo.alt : ''}
         copyright={footer.copyright}
         siteLinks={siteLinks}
         socialLinks={socialLinks}

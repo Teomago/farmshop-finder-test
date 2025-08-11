@@ -369,4 +369,43 @@ const selectedHome = homeData.docs.find(doc => doc.heroinfo === activeKey);
 console.log(selectedHome?.hero.title);
 ```
 
+## Deployment
+
+### Vercel Deployment
+
+This project is ready for deployment on Vercel. All TypeScript errors and ESLint warnings have been resolved.
+
+#### Prerequisites for Vercel Deployment:
+
+1. **Environment Variables**: Configure the following environment variables in your Vercel project dashboard:
+   ```
+   DATABASE_URI=your-mongodb-connection-string
+   PAYLOAD_SECRET=your-secure-secret-key
+   S3_BUCKET=your-s3-bucket-name
+   S3_ACCESS_KEY_ID=your-access-key-id
+   S3_SECRET_ACCESS_KEY=your-secret-access-key
+   S3_REGION=your-region
+   S3_ENDPOINT=your-s3-endpoint
+   ```
+
+2. **Build Configuration**: The project uses Next.js with the following build script:
+   ```json
+   "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build"
+   ```
+
+3. **Memory Requirements**: The build process requires increased memory allocation (8GB) for optimal performance.
+
+#### Deployment Steps:
+
+1. Connect your repository to Vercel
+2. Configure the environment variables in the Vercel dashboard
+3. Deploy - Vercel will automatically run `npm run build`
+4. Your app will be available at your Vercel-provided URL
+
+#### Build Status:
+✅ TypeScript compilation: No errors  
+✅ ESLint linting: No warnings  
+✅ Build artifacts generated successfully  
+✅ Ready for production deployment
+
 

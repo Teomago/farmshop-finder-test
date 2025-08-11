@@ -11,7 +11,6 @@ import { s3Storage } from '@payloadcms/storage-s3'
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import brevoAdapter from './utils/brevoAdapter'
-import { config } from 'process'
 import { Pages } from './collections/Pages'
 import { Header } from './globals/Header'
 import { Footer } from './globals/Footer'
@@ -47,14 +46,14 @@ export default buildConfig({
           prefix: 'media',
         },
       },
-      bucket: process.env.S3_BUCKET,
+      bucket: process.env.S3_BUCKET || '',
       config: {
         credentials: {
-          accessKeyId: process.env.S3_ACCESS_KEY_ID,
-          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+          accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
+          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
         },
-        region: process.env.S3_REGION,
-        endpoint: process.env.S3_ENDPOINT,
+        region: process.env.S3_REGION || '',
+        endpoint: process.env.S3_ENDPOINT || '',
         forcePathStyle: true, // Required for some S3-compatible services
       },
     }),
