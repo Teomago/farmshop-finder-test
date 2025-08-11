@@ -342,4 +342,31 @@ To integrate Payload CMS with the front-end:
 4. **Test the Integration**:
    Run the application locally and verify that the header, footer, and other dynamic content are rendered correctly.
 
+## Dynamic Home Page Selection
+
+To render a specific "Home" document chosen via the `home-config` global, you can filter your collection on the client/server component:
+
+```ts
+// 1. Fetch the active Home entry from the global config
+const { activeHome } = await payload.findGlobal({
+  slug: 'home-config',
+  depth: 1,
+});
+
+// 2. Extract the identifying field (e.g., `heroinfo`)
+const activeKey = activeHome.heroinfo;
+
+// 3. Fetch all Home docs
+const homeData = await payload.find({
+  collection: 'home',
+  depth: 1,
+});
+
+// 4. Find the matching document by the key
+const selectedHome = homeData.docs.find(doc => doc.heroinfo === activeKey);
+
+// 5. Use its values in your component
+console.log(selectedHome?.hero.title);
+```
+
 

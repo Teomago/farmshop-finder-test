@@ -12,48 +12,86 @@ import config from '@/payload.config'
 import './styles.css'
 import Hero from './hero'
 
+import Home from './components/Home'
+
 export const metadata = {
   description: 'An app to find local farmshops.',
   title: 'Farmshop Finder',
 }
 
 export default async function HomePage() {
+  const payload = await getPayload({ config })
   const headers = await getHeaders()
-  const payloadConfig = await config
-  const payload = await getPayload({ config: payloadConfig })
   const { user } = await payload.auth({ headers })
-
   const fileURL = `vscode://file/${fileURLToPath(import.meta.url)}`
+
+  const homeConfig = await payload.findGlobal({
+    slug: 'home-config',
+    depth: 1,
+  })
+
+  const configHome = homeConfig.activeHome.heroinfo
+
+  console.log('Config Home:', configHome)
+  const homeData = await payload.find({
+    collection: 'home',
+    depth: 1,
+  })
+  const activeHome = homeData.docs.find((doc) => doc.heroinfo === configHome)
+
+  console.log(activeHome)
 
   return (
     <>
       <div className="flex flex-col justify-center px-6">
-        <Card
-          isFooterBlurred
-          className="w-full h-[calc(800px*0.85)] sm:h-[475px] md:h-[650px] xl:w-[calc(1280px*0.9)] 2xl:w-[calc(1536px*0.9)] md:m-auto"
-        >
-          <CardHeader className="absolute z-10 top-1 flex-col items-start">
-            <p className="text-tiny text-white/90 uppercase font-bold md:text-2xl">
-              Your Farm Here
-            </p>
-          </CardHeader>
-          <HeroUiImage
-            removeWrapper
-            radius="none"
-            alt="Card example background"
-            className="z-0 w-full h-full scale-125 -translate-y-6 object-cover"
-            src="https://images.pexels.com/photos/4818015/pexels-photo-4818015.jpeg?_gl=1*mnulyk*_ga*MTkzMTgxMzM2NC4xNzU0NTY0Nzc4*_ga_8JE65Q40S6*czE3NTQ1NjQ3NzckbzEkZzEkdDE3NTQ1NjQ4MTYkajIxJGwwJGgw"
-          />
-          <CardFooter className="absolute bg-white/30 bottom-0 border-t-1 border-zinc-100/50 z-10 justify-between">
-            <div>
-              <p className="text-black text-tiny">Available soon.</p>
-              <p className="text-black text-tiny">Get notified.</p>
+        <div>
+          <Card
+            isFooterBlurred
+            className="w-full h-[calc(800px*0.85)] sm:h-[475px] md:h-[650px] xl:w-[calc(1280px*0.9)] 2xl:w-[calc(1536px*0.9)]"
+          >
+            <CardHeader className="absolute z-10 top-1 flex-col items-start">
+              <p className="text-tiny text-white/90 uppercase font-bold md:text-2xl">
+                {activeHome?.hero.title}
+              </p>
+            </CardHeader>
+            <HeroUiImage
+              removeWrapper
+              radius="none"
+              alt={activeHome?.hero.backgroundImage.alt}
+              className="z-0 w-full h-full scale-125 -translate-y-6 object-cover"
+              src={activeHome?.hero.backgroundImage.url}
+            />
+            <CardFooter className="absolute bg-white/30 bottom-0 border-t-1 border-zinc-100/50 z-10 justify-between">
+              <div>
+                <p className="text-black text-tiny">{activeHome?.hero.subtitle}</p>
+              </div>
+              <Button
+                href={activeHome?.hero.ctaButton.link}
+                className="text-tiny bg-[var(--carrot)]/85"
+                radius="full"
+                size="sm"
+              >
+                {activeHome?.hero.ctaButton.text}
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+        <div className="flex flex-col w-full contain-content text-black items-center justify-center my-4 xl:w-[calc(1280px*0.9)] 2xl:w-[calc(1536px*0.9)]">
+          <div className="flex flex-col items-center justify-center my-2">
+            <h1>{activeHome?.bigSection.title}</h1>
+            <p>{activeHome?.bigSection.content}</p>
+          </div>
+          <div className="flex flex-col items-center gap-4 justify-center md:grid md:grid-cols-2 my-2">
+            <div className="md:col-span-1">
+              <h2>{activeHome?.sectionA.title}</h2>
+              <p>{activeHome?.sectionA.content}</p>
             </div>
-            <Button className="text-tiny bg-[var(--carrot)]/85" radius="full" size="sm">
-              Let's find
-            </Button>
-          </CardFooter>
-        </Card>
+            <div className="md:col-span-1">
+              <h2>{activeHome?.sectionB.title}</h2>
+              <p>{activeHome?.sectionB.content}</p>
+            </div>
+          </div>
+        </div>
         <div className="flex flex-col xl:w-[calc(1280px*0.9)] 2xl:w-[calc(1536px*0.9)] md:flex-row w-full justify-between items-center gap-3 mt-6">
           <div className="w-full">
             <HeroUiImage

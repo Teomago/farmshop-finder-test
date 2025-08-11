@@ -15,6 +15,8 @@ import { config } from 'process'
 import { Pages } from './collections/Pages'
 import { Header } from './globals/Header'
 import { Footer } from './globals/Footer'
+import { Home } from './collections/Home'
+import { HomeConfig } from './globals/HomeConfig'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -26,9 +28,9 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  globals: [Header, Footer],
-  collections: [Users, Media, Pages],
-  editor: lexicalEditor(),
+  globals: [Header, Footer, HomeConfig],
+  collections: [Users, Media, Pages, Home],
+  editor: lexicalEditor({}),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),

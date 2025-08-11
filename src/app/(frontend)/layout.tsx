@@ -2,10 +2,8 @@ import React from 'react'
 import './styles.css'
 import { Providers } from './providers'
 
-import HeaderServer from './blocks/Header/Server'
-
-import NavbarCP from './components/Navbar'
-import Footer from './components/Footer'
+import HeaderServer from './blocks/globals/Header/Server'
+import FooterServer from './blocks/globals/Footer/Server'
 
 export default async function RootLayout(props: { children: React.ReactNode }) {
   const { children } = props
@@ -19,7 +17,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
             {children}
           </main>
         </Providers>
-        <Footer />
+        <FooterServer />
       </body>
     </html>
   )

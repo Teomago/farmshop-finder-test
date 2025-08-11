@@ -1,3 +1,6 @@
+import { Cover } from '@/app/(frontend)/blocks/cover/schema'
+import { RichText } from '@/app/(frontend)/blocks/richText/schema'
+import { Image } from '@/app/(frontend)/blocks/image/schema'
 import { CollectionConfig } from 'payload'
 
 export const Pages: CollectionConfig = {
@@ -22,7 +25,7 @@ export const Pages: CollectionConfig = {
       name: 'layout',
       label: 'Layout',
       type: 'blocks',
-      blocks: [], // Define your blocks here
+      blocks: [Cover, RichText, Image], // Define your blocks here
     },
   ],
 }

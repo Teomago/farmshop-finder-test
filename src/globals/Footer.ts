@@ -34,6 +34,12 @@ export const Footer: GlobalConfig = {
           type: 'text',
         },
       ],
+      minRows: 1,
+      maxRows: 5,
+      required: true,
+      admin: {
+        description: 'Add your site Links',
+      },
     },
     {
       name: 'socialLinks',
@@ -53,6 +59,7 @@ export const Footer: GlobalConfig = {
       ],
       minRows: 1,
       maxRows: 5,
+      required: true,
       admin: {
         description: 'Add links to your social media profiles.',
       },
@@ -73,10 +80,10 @@ export const Footer: GlobalConfig = {
           type: 'text',
         },
       ],
+      required: true,
       admin: {
         description: 'Add links to your terms and conditions, privacy policy, etc.',
       },
-      required: true,
     },
   ],
 }

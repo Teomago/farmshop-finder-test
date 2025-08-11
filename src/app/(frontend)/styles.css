@@ -5,8 +5,20 @@
 
 :root {
   --font-mono: 'Roboto Mono', monospace;
-  --carrot: #D97706;
-  --squash: #FBBF24;
-  --barn: #2F3E46;
-  --bone: #FCF8F3;
+  --carrot: #d97706;
+  --squash: #fbbf24;
+  --barn: #2f3e46;
+  --bone: #fcf8f3;
+}
+
+h1 {
+  @apply text-7xl my-4;
+}
+
+h2 {
+  @apply text-5xl my-4;
+}
+
+p {
+  @apply text-xl;
 }

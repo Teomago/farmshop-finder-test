@@ -14,6 +14,8 @@ import { Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from '@heroui/d
 import { Link } from '@heroui/link'
 import { Button } from '@heroui/button'
 import Image from 'next/image'
+import { Avatar } from '@heroui/avatar'
+import { User } from '@heroui/user'
 
 import {
   AcmeLogo,
@@ -70,9 +72,9 @@ export default function NavbarCP({
         />
         <NavbarBrand>
           {/**Logo de la página */}
-          <Image src={logoUrl} alt={logoAlt} width={50} height={50} className="" />
+          <Image src={logoUrl} color="white" alt={logoAlt} width={50} height={50} />
           {/**Nombre de la página */}
-          <p className="font-bold text-inherit">{title}</p>
+          <p className="hidden md:block font-bold text-inherit">{title}</p>
         </NavbarBrand>
       </NavbarContent>
 
@@ -145,27 +147,51 @@ export default function NavbarCP({
 
       <NavbarContent justify="end">
         <NavbarItem>
-          <Link
-            className="bg-[var(--bone)] text-[var(--carrot)] font-semibold px-4 py-1 rounded-2xl"
-            href="./admin"
-            size="md"
-          >
-            Admin
-          </Link>
+          <Dropdown>
+            <DropdownTrigger>
+              <User
+                as="button"
+                avatarProps={{
+                  isBordered: true,
+                  src: '/api/media/file/teo_avatar.png',
+                }}
+                className="transition-transform mt-1"
+                description="@teoibagon"
+                name="Mateo Ibagón"
+              />
+            </DropdownTrigger>
+            <DropdownMenu aria-label="User Actions" variant="flat">
+              <DropdownItem key="profile" className="h-14 gap-2">
+                <p className="font-bold">Signed in as</p>
+                <p className="font-bold">@tonyreichert</p>
+              </DropdownItem>
+              <DropdownItem key="admin" href="/admin">
+                My Settings
+              </DropdownItem>
+              <DropdownItem key="team_settings">Team Settings</DropdownItem>
+              <DropdownItem key="analytics">Analytics</DropdownItem>
+              <DropdownItem key="system">System</DropdownItem>
+              <DropdownItem key="configurations">Configurations</DropdownItem>
+              <DropdownItem key="help_and_feedback">Help & Feedback</DropdownItem>
+              <DropdownItem key="logout" color="danger">
+                Log Out
+              </DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
         </NavbarItem>
       </NavbarContent>
       <NavbarMenu>
-        {menuItems.map((item, index) => (
+        {navItems.map((item, index) => (
           <NavbarMenuItem key={`${item}-${index}`}>
             <Link
               className="w-full"
               color={
-                index === 2 ? 'primary' : index === menuItems.length - 1 ? 'danger' : 'foreground'
+                index === 1 ? 'primary' : index === menuItems.length - 1 ? 'danger' : 'foreground'
               }
-              href="#"
+              href={item.link}
               size="lg"
             >
-              {item}
+              {item.label}
             </Link>
           </NavbarMenuItem>
         ))}

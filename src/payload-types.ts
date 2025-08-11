@@ -70,6 +70,7 @@ export interface Config {
     users: User;
     media: Media;
     pages: Page;
+    home: Home;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -79,6 +80,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
+    home: HomeSelect<false> | HomeSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -89,10 +91,12 @@ export interface Config {
   globals: {
     header: Header;
     footer: Footer;
+    'home-config': HomeConfig;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
+    'home-config': HomeConfigSelect<false> | HomeConfigSelect<true>;
   };
   locale: null;
   user: User & {
@@ -173,7 +177,74 @@ export interface Page {
   id: string;
   name: string;
   slug: string;
-  layout?: unknown[] | null;
+  layout?:
+    | (
+        | {
+            title: string;
+            subtitle: string;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'cover';
+          }
+        | {
+            content: {
+              root: {
+                type: string;
+                children: {
+                  type: string;
+                  version: number;
+                  [k: string]: unknown;
+                }[];
+                direction: ('ltr' | 'rtl') | null;
+                format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                indent: number;
+                version: number;
+              };
+              [k: string]: unknown;
+            };
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'richText';
+          }
+        | {
+            image: string | Media;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'image';
+          }
+      )[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home".
+ */
+export interface Home {
+  id: string;
+  heroinfo: string;
+  hero: {
+    title: string;
+    backgroundImage: string | Media;
+    subtitle: string;
+    ctaButton: {
+      text: string;
+      link: string;
+    };
+  };
+  bigSection: {
+    title: string;
+    content: string;
+  };
+  sectionA: {
+    title: string;
+    content: string;
+  };
+  sectionB: {
+    title: string;
+    content: string;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -195,6 +266,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pages';
         value: string | Page;
+      } | null)
+    | ({
+        relationTo: 'home';
+        value: string | Home;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -286,7 +361,72 @@ export interface MediaSelect<T extends boolean = true> {
 export interface PagesSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
-  layout?: T | {};
+  layout?:
+    | T
+    | {
+        cover?:
+          | T
+          | {
+              title?: T;
+              subtitle?: T;
+              id?: T;
+              blockName?: T;
+            };
+        richText?:
+          | T
+          | {
+              content?: T;
+              id?: T;
+              blockName?: T;
+            };
+        image?:
+          | T
+          | {
+              image?: T;
+              id?: T;
+              blockName?: T;
+            };
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home_select".
+ */
+export interface HomeSelect<T extends boolean = true> {
+  heroinfo?: T;
+  hero?:
+    | T
+    | {
+        title?: T;
+        backgroundImage?: T;
+        subtitle?: T;
+        ctaButton?:
+          | T
+          | {
+              text?: T;
+              link?: T;
+            };
+      };
+  bigSection?:
+    | T
+    | {
+        title?: T;
+        content?: T;
+      };
+  sectionA?:
+    | T
+    | {
+        title?: T;
+        content?: T;
+      };
+  sectionB?:
+    | T
+    | {
+        title?: T;
+        content?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -358,23 +498,22 @@ export interface Footer {
    * Text to display in the footer, e.g., "© 2023 Your Company Name".
    */
   copyright: string;
-  siteLinks?:
-    | {
-        label?: string | null;
-        url?: string | null;
-        id?: string | null;
-      }[]
-    | null;
+  /**
+   * Add your site Links
+   */
+  siteLinks: {
+    label?: string | null;
+    url?: string | null;
+    id?: string | null;
+  }[];
   /**
    * Add links to your social media profiles.
    */
-  socialLinks?:
-    | {
-        platform?: string | null;
-        url?: string | null;
-        id?: string | null;
-      }[]
-    | null;
+  socialLinks: {
+    platform?: string | null;
+    url?: string | null;
+    id?: string | null;
+  }[];
   /**
    * Add links to your terms and conditions, privacy policy, etc.
    */
@@ -383,6 +522,16 @@ export interface Footer {
     policyLink?: string | null;
     id?: string | null;
   }[];
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home-config".
+ */
+export interface HomeConfig {
+  id: string;
+  activeHome: string | Home;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -432,6 +581,16 @@ export interface FooterSelect<T extends boolean = true> {
         policyLink?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home-config_select".
+ */
+export interface HomeConfigSelect<T extends boolean = true> {
+  activeHome?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
