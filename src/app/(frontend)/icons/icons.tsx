@@ -2,6 +2,14 @@
 
 import React from 'react'
 
+interface IconProps {
+  fill?: string
+  size?: number
+  height?: number
+  width?: number
+  className?: string
+}
+
 export const AcmeLogo = () => {
   return (
     <svg fill="none" height="36" viewBox="0 0 32 32" width="36">
@@ -15,7 +23,7 @@ export const AcmeLogo = () => {
   )
 }
 
-export const ChevronDown = ({ fill = 'currentColor', size, height, width, ...props }) => {
+export const ChevronDown = ({ fill = 'currentColor', size, height, width, ...props }: IconProps) => {
   return (
     <svg
       fill="none"
@@ -37,7 +45,7 @@ export const ChevronDown = ({ fill = 'currentColor', size, height, width, ...pro
   )
 }
 
-export const Lock = ({ fill = 'currentColor', size, height, width, ...props }) => {
+export const Lock = ({ fill = 'currentColor', size, height, width, ...props }: IconProps) => {
   const color = fill
 
   return (
@@ -84,7 +92,7 @@ export const Lock = ({ fill = 'currentColor', size, height, width, ...props }) =
   )
 }
 
-export const Activity = ({ fill = 'currentColor', size, height, width, ...props }) => {
+export const Activity = ({ fill = 'currentColor', size, height, width, ...props }: IconProps) => {
   return (
     <svg
       height={size || height || 24}
@@ -109,7 +117,7 @@ export const Activity = ({ fill = 'currentColor', size, height, width, ...props 
   )
 }
 
-export const Flash = ({ fill = 'currentColor', size, height, width, ...props }) => {
+export const Flash = ({ fill = 'currentColor', size, height, width, ...props }: IconProps) => {
   return (
     <svg
       fill="none"
@@ -131,7 +139,7 @@ export const Flash = ({ fill = 'currentColor', size, height, width, ...props }) 
   )
 }
 
-export const Server = ({ fill = 'currentColor', size, height, width, ...props }) => {
+export const Server = ({ fill = 'currentColor', size, height, width, ...props }: IconProps) => {
   return (
     <svg
       fill="none"
@@ -152,7 +160,7 @@ export const Server = ({ fill = 'currentColor', size, height, width, ...props })
   )
 }
 
-export const TagUser = ({ fill = 'currentColor', size, height, width, ...props }) => {
+export const TagUser = ({ fill = 'currentColor', size, height, width, ...props }: IconProps) => {
   return (
     <svg
       fill="none"
@@ -181,7 +189,7 @@ export const TagUser = ({ fill = 'currentColor', size, height, width, ...props }
   )
 }
 
-export const Scale = ({ fill = 'currentColor', size, height, width, ...props }) => {
+export const Scale = ({ fill = 'currentColor', size, height, width, ...props }: IconProps) => {
   return (
     <svg
       fill="none"

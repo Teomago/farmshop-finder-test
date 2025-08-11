@@ -15,6 +15,9 @@ export default function Footer({
   copyright: string
   logoUrl: string
   logoAlt: string
+  siteLinks: Array<{ id: string; label: string; url: string }>
+  socialLinks: Array<{ id: string; label: string; url: string }>
+  policies: Array<{ id: string; label: string; url: string }>
 }) {
   return (
     <footer className="w-full flex min-h-[4em] h-auto items-center justify-center bg-[var(--carrot)]">

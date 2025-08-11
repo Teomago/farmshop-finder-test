@@ -19,8 +19,8 @@ export default async function HeaderServer() {
   return (
     <NavbarCP
       title={header.title}
-      logoUrl={header.logo.url}
-      logoAlt={header.logo.alt}
+      logoUrl={typeof header.logo === 'object' && header.logo?.url ? header.logo.url : ''}
+      logoAlt={typeof header.logo === 'object' && header.logo?.alt ? header.logo.alt : ''}
       navItems={navItems}
     />
   )

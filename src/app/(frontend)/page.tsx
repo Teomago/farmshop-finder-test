@@ -30,7 +30,9 @@ export default async function HomePage() {
     depth: 1,
   })
 
-  const configHome = homeConfig.activeHome.heroinfo
+  const configHome = typeof homeConfig.activeHome === 'object' && homeConfig.activeHome 
+    ? homeConfig.activeHome.heroinfo 
+    : homeConfig.activeHome
 
   console.log('Config Home:', configHome)
   const homeData = await payload.find({
@@ -55,9 +57,9 @@ export default async function HomePage() {
             <HeroUiImage
               removeWrapper
               radius="none"
-              alt={activeHome?.hero.backgroundImage.alt}
+              alt={typeof activeHome?.hero.backgroundImage === 'object' && activeHome?.hero.backgroundImage?.alt ? activeHome.hero.backgroundImage.alt : ''}
               className="z-0 w-full h-full scale-125 -translate-y-6 object-cover"
-              src={activeHome?.hero.backgroundImage.url}
+              src={typeof activeHome?.hero.backgroundImage === 'object' && activeHome?.hero.backgroundImage?.url ? activeHome.hero.backgroundImage.url : ''}
             />
             <CardFooter className="absolute bg-white/30 bottom-0 border-t-1 border-zinc-100/50 z-10 justify-between">
               <div>

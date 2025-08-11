@@ -37,17 +37,18 @@ export default function NavbarCP({
   title: string
   logoUrl: string
   logoAlt: string
+  navItems: Array<{ id: string; label: string; link: string }>
 }) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
 
   const icons = {
-    chevron: <ChevronDown fill="currentColor" size={16} />,
-    scale: <Scale className="text-warning" fill="currentColor" size={30} />,
-    lock: <Lock className="text-success" fill="currentColor" size={30} />,
-    activity: <Activity className="text-secondary" fill="currentColor" size={30} />,
-    flash: <Flash className="text-primary" fill="currentColor" size={30} />,
-    server: <Server className="text-success" fill="currentColor" size={30} />,
-    user: <TagUser className="text-danger" fill="currentColor" size={30} />,
+    chevron: <ChevronDown fill="currentColor" size={16} height={16} width={16} />,
+    scale: <Scale className="text-warning" fill="currentColor" size={30} height={30} width={30} />,
+    lock: <Lock className="text-success" fill="currentColor" size={30} height={30} width={30} />,
+    activity: <Activity className="text-secondary" fill="currentColor" size={30} height={30} width={30} />,
+    flash: <Flash className="text-primary" fill="currentColor" size={30} height={30} width={30} />,
+    server: <Server className="text-success" fill="currentColor" size={30} height={30} width={30} />,
+    user: <TagUser className="text-danger" fill="currentColor" size={30} height={30} width={30} />,
   }
 
   const menuItems = [
