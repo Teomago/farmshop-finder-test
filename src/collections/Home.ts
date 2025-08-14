@@ -115,5 +115,21 @@ export const Home: CollectionConfig = {
         },
       ],
     },
+    {
+      name: 'btImages',
+      label: 'Bottom Images',
+      type: 'array',
+      fields: [
+        {
+          name: 'image',
+          label: 'Image',
+          type: 'upload',
+          relationTo: 'media',
+          required: true,
+        },
+      ],
+      minRows: 1,
+      maxRows: 6,
+    },
   ],
 }

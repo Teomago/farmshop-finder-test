@@ -164,6 +164,9 @@ importers:
       '@payloadcms/payload-cloud':
         specifier: 3.50.0
         version: 3.50.0(payload@3.50.0(graphql@16.11.0)(typescript@5.7.3))
+      '@payloadcms/plugin-nested-docs':
+        specifier: ^3.50.0
+        version: 3.50.0(payload@3.50.0(graphql@16.11.0)(typescript@5.7.3))
       '@payloadcms/richtext-lexical':
         specifier: 3.50.0
         version: 3.50.0(@faceless-ui/modal@3.0.0-beta.2(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(@faceless-ui/scroll-info@2.0.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(@payloadcms/next@3.50.0(@types/react@19.1.8)(graphql@16.11.0)(monaco-editor@0.52.2)(next@15.4.4(@babel/core@7.28.0)(@playwright/test@1.54.1)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(sass@1.77.4))(payload@3.50.0(graphql@16.11.0)(typescript@5.7.3))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.7.3))(@types/react@19.1.8)(monaco-editor@0.52.2)(next@15.4.4(@babel/core@7.28.0)(@playwright/test@1.54.1)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(sass@1.77.4))(payload@3.50.0(graphql@16.11.0)(typescript@5.7.3))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.7.3)(yjs@13.6.27)
@@ -209,6 +212,9 @@ importers:
       sharp:
         specifier: 0.34.2
         version: 0.34.2
+      standard-slugify:
+        specifier: ^4.0.0
+        version: 4.0.0
       tailwindcss:
         specifier: ^4.1.11
         version: 4.1.11
@@ -2102,6 +2108,11 @@ packages:
       payload: 3.50.0
       react: ^19.0.0 || ^19.0.0-rc-65a56d0e-20241020
       react-dom: ^19.0.0 || ^19.0.0-rc-65a56d0e-20241020
+
+  '@payloadcms/plugin-nested-docs@3.50.0':
+    resolution: {integrity: sha512-d0tbolBtUgb5WAhXhEGN5XQSDDakj1lKpXExrXqR1JJM5tACNfFvwk9OugNsukcjPpSeDB1VZa4173kaKOOcQg==}
+    peerDependencies:
+      payload: 3.50.0
 
   '@payloadcms/richtext-lexical@3.50.0':
     resolution: {integrity: sha512-bW3LdTdVvipcaxZL3GxvHky+WEN2x7w+jOkXIHHnYkd+PzgF3aL3mNjHJve9JDdqJF5cHFLq8mFBi9WQfs80FQ==}
@@ -5387,6 +5398,9 @@ packages:
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
 
+  standard-slugify@4.0.0:
+    resolution: {integrity: sha512-4ND2rNZN/k/Fmz90MSD96Q0rGH5hTuJFDVDJ4XbXWrn5jpBUFCnOwG7gEQlLpAuAN02lTwTPl1p1+oMYoXSfiA==}
+
   state-local@1.0.7:
     resolution: {integrity: sha512-HTEHMNieakEnoe33shBYcZ7NX83ACUjCu8c40iOGEZsngj9zRnkqS9j1pqQPXwobB0ZcVTk27REb7COQ0UR59w==}
 
@@ -8619,6 +8633,10 @@ snapshots:
       - next
       - supports-color
       - typescript
+
+  '@payloadcms/plugin-nested-docs@3.50.0(payload@3.50.0(graphql@16.11.0)(typescript@5.7.3))':
+    dependencies:
+      payload: 3.50.0(graphql@16.11.0)(typescript@5.7.3)
 
   '@payloadcms/richtext-lexical@3.50.0(@faceless-ui/modal@3.0.0-beta.2(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(@faceless-ui/scroll-info@2.0.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(@payloadcms/next@3.50.0(@types/react@19.1.8)(graphql@16.11.0)(monaco-editor@0.52.2)(next@15.4.4(@babel/core@7.28.0)(@playwright/test@1.54.1)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(sass@1.77.4))(payload@3.50.0(graphql@16.11.0)(typescript@5.7.3))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.7.3))(@types/react@19.1.8)(monaco-editor@0.52.2)(next@15.4.4(@babel/core@7.28.0)(@playwright/test@1.54.1)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(sass@1.77.4))(payload@3.50.0(graphql@16.11.0)(typescript@5.7.3))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.7.3)(yjs@13.6.27)':
     dependencies:
@@ -12820,6 +12838,8 @@ snapshots:
   stable-hash@0.0.5: {}
 
   stackback@0.0.2: {}
+
+  standard-slugify@4.0.0: {}
 
   state-local@1.0.7: {}
 

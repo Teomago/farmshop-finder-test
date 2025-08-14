@@ -70,6 +70,8 @@ export interface Config {
     users: User;
     media: Media;
     pages: Page;
+    products: Product;
+    farms: Farm;
     home: Home;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -80,6 +82,8 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
+    products: ProductsSelect<false> | ProductsSelect<true>;
+    farms: FarmsSelect<false> | FarmsSelect<true>;
     home: HomeSelect<false> | HomeSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -176,7 +180,7 @@ export interface Media {
 export interface Page {
   id: string;
   name: string;
-  slug: string;
+  slug?: string | null;
   layout?:
     | (
         | {
@@ -214,6 +218,82 @@ export interface Page {
           }
       )[]
     | null;
+  pathname?: string | null;
+  parent?: (string | null) | Page;
+  breadcrumbs?:
+    | {
+        doc?: (string | null) | Page;
+        url?: string | null;
+        label?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products".
+ */
+export interface Product {
+  id: string;
+  name: string;
+  productType: 'produce' | 'dairy' | 'meat' | 'poultry';
+  productImage: string | Media;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "farms".
+ */
+export interface Farm {
+  id: string;
+  name: string;
+  slug?: string | null;
+  tagline?: string | null;
+  location?: string | null;
+  farmImage: string | Media;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  products?:
+    | {
+        product: string | Product;
+        quantity: number;
+        unit: 'kg' | 'pcs' | 'liters' | 'boxes';
+        price: number;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -245,6 +325,12 @@ export interface Home {
     title: string;
     content: string;
   };
+  btImages?:
+    | {
+        image: string | Media;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -266,6 +352,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pages';
         value: string | Page;
+      } | null)
+    | ({
+        relationTo: 'products';
+        value: string | Product;
+      } | null)
+    | ({
+        relationTo: 'farms';
+        value: string | Farm;
       } | null)
     | ({
         relationTo: 'home';
@@ -387,6 +481,52 @@ export interface PagesSelect<T extends boolean = true> {
               blockName?: T;
             };
       };
+  pathname?: T;
+  parent?: T;
+  breadcrumbs?:
+    | T
+    | {
+        doc?: T;
+        url?: T;
+        label?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products_select".
+ */
+export interface ProductsSelect<T extends boolean = true> {
+  name?: T;
+  productType?: T;
+  productImage?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "farms_select".
+ */
+export interface FarmsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  tagline?: T;
+  location?: T;
+  farmImage?: T;
+  description?: T;
+  products?:
+    | T
+    | {
+        product?: T;
+        quantity?: T;
+        unit?: T;
+        price?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -426,6 +566,12 @@ export interface HomeSelect<T extends boolean = true> {
     | {
         title?: T;
         content?: T;
+      };
+  btImages?:
+    | T
+    | {
+        image?: T;
+        id?: T;
       };
   updatedAt?: T;
   createdAt?: T;

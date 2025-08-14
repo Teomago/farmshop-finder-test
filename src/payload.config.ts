@@ -7,6 +7,7 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 import { s3Storage } from '@payloadcms/storage-s3'
+import { nestedDocsPlugin } from '@payloadcms/plugin-nested-docs'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
@@ -16,6 +17,8 @@ import { Header } from './globals/Header'
 import { Footer } from './globals/Footer'
 import { Home } from './collections/Home'
 import { HomeConfig } from './globals/HomeConfig'
+import { Products } from './collections/Products'
+import { Farms } from './collections/Farms'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -28,7 +31,7 @@ export default buildConfig({
     },
   },
   globals: [Header, Footer, HomeConfig],
-  collections: [Users, Media, Pages, Home],
+  collections: [Users, Media, Pages, Products, Farms, Home],
   editor: lexicalEditor({}),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
@@ -56,6 +59,13 @@ export default buildConfig({
         endpoint: process.env.S3_ENDPOINT || '',
         forcePathStyle: true, // Required for some S3-compatible services
       },
+    }),
+    nestedDocsPlugin({
+      collections: ['pages'],
+      generateLabel: (_, doc) => doc?.name as string,
+      //Do not change the `.replace` below. It ensures that "/" is allowed for the slug, with breadcrumbs
+      generateURL: (docs) =>
+        docs.reduce((url, doc) => `${url}/${doc.slug}`.replace(/^\/+/, '/'), ''),
     }),
   ],
   email: brevoAdapter(),
