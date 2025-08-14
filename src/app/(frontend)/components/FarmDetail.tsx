@@ -3,8 +3,9 @@
 import React from 'react'
 import { Card, CardFooter } from '@heroui/card'
 import { Image as HeroUiImage } from '@heroui/image'
+import type { Farm } from '@/payload-types'
 
-export default function FarmDetail({ farm }: { farm: any }) {
+export default function FarmDetail({ farm }: { farm: Farm }) {
   if (!farm) return null
 
   return (
@@ -46,7 +47,7 @@ export default function FarmDetail({ farm }: { farm: any }) {
         <section className="flex flex-col xl:flex-row w-full h-full xl:w-[calc(1280px*0.9)] 2xl:w-[calc(1536px*0.9)] mt-10 space-y-4">
           <h2 className="text-xl font-semibold text-black my-4">Available products</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {farm.products.map((p: any) => {
+            {farm.products.map((p) => {
               const prod = typeof p.product === 'object' && p.product ? p.product : null
               const image = prod && typeof prod.productImage === 'object' ? prod.productImage : null
               return (
@@ -66,9 +67,6 @@ export default function FarmDetail({ farm }: { farm: any }) {
                     <div className="flex justify-between gap-4">
                       <div className="font-bold text-2xl">
                         {prod ? prod.name : 'Product'}
-                        {p.variantKey ? (
-                          <span className="opacity-70"> · {p.variantKey}</span>
-                        ) : null}
                       </div>
                       <div className="font-bold text-2xl">€{p.price?.toFixed?.(2) ?? '0.00'}</div>
                     </div>

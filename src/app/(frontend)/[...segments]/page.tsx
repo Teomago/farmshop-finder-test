@@ -1,10 +1,6 @@
-import { getAllPagePathnameSegments, getPageByPathname } from '@/module/common/data'
+import { getPageByPathname } from '@/module/common/data'
 import { resolvePathname } from '@/utils/resolvePathname'
-import type { Metadata, ResolvingMetadata } from 'next'
 import { notFound } from 'next/navigation'
-import path from 'path'
-import { getPayload } from 'payload'
-import config from '@payload-config'
 import React from 'react'
 
 export const dynamic = 'force-dynamic'

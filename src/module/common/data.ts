@@ -56,7 +56,7 @@ export const findOneBySlug = async <S extends CollectionSlug>({
     }
 
     return getCachedFindOneBySlugData({ collection, slug })
-  } catch (error) {
+  } catch (_error) {
     console.error(`Error fetching - collection: ${collection} - slug: ${slug}`)
     return null
   }

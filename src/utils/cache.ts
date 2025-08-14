@@ -1,9 +1,9 @@
 import { cache as reactCache } from 'react'
 import { unstable_cache as nextCache } from 'next/cache'
 
-type CacheOptions = {
+type CacheOptions<TArgs extends unknown[]> = {
   revalidate?: number | false
-  tags?: string[] | ((...args: any[]) => string[])
+  tags?: string[] | ((...args: TArgs) => string[])
 }
 
 /**
@@ -42,9 +42,9 @@ type CacheOptions = {
  *   [userId] // Declare closure var
  * )
  */
-export const cache = <TArgs extends any[], TResult>(
+export const cache = <TArgs extends unknown[], TResult>(
   fn: (...args: TArgs) => Promise<TResult>,
-  options?: CacheOptions,
+  options?: CacheOptions<TArgs>,
   closureVars?: string[],
 ) =>
   reactCache((...args: TArgs) =>
