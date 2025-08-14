@@ -7,6 +7,8 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import React from 'react'
 
+export const dynamic = 'force-dynamic'
+
 interface Props {
   params: Promise<{
     segments: string[]
@@ -29,9 +31,10 @@ const Pages = async ({ params }: Props) => {
   )
 }
 
-export const generateStaticParams = async () => {
-  return await getAllPagePathnameSegments()
-}
+// Disabled for Vercel deployment - use dynamic rendering instead
+// export const generateStaticParams = async () => {
+//   return await getAllPagePathnameSegments()
+// }
 
 // export const generateMetadata = async (
 //   { params }: Props,
