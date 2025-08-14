@@ -3,6 +3,8 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import FarmDetail from '@/app/(frontend)/components/FarmDetail'
 
+export const dynamic = 'force-dynamic'
+
 async function getFarmBySlugOrId(slugOrId: string) {
   const payload = await getPayload({ config })
   // Try by slug first

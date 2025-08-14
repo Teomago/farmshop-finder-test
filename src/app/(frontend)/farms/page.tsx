@@ -1,8 +1,8 @@
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import Image from 'next/image'
 import Farms from '@/app/(frontend)/components/Farms'
 
+export const dynamic = 'force-dynamic'
 export const revalidate = 60
 
 export default async function FarmsIndexPage() {

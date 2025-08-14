@@ -1,9 +1,10 @@
 'use client'
 
 import React from 'react'
-import { Card, CardHeader, CardFooter } from '@heroui/card'
+import { Card, CardFooter } from '@heroui/card'
 import { Image as HeroUiImage } from '@heroui/image'
 import Link from 'next/link'
+import type { Media } from '@/payload-types'
 
 export default function Farms({
   farmId,
@@ -16,7 +17,7 @@ export default function Farms({
   farmName: string
   farmLocation: string | null | undefined
   farmSlug: string
-  farmImage: any | { url: string; alt?: string } | string
+  farmImage: string | Media
 }) {
   return (
     <Card

@@ -327,18 +327,62 @@ pnpm payload generate:types     # Regenerate Payload TypeScript types
 
 ---
 
-## 17. Deployment (Vercel)
+## 17. Deployment (Vercel) ✅ READY
+
+**Status: ✅ Repository is deployment-ready for Vercel**
+
+### Build Configuration
 Build script (package.json):
 ```json
 "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build"
 ```
-Ensure environment variables are added in Vercel dashboard (DB, S3, Brevo, PAYLOAD_SECRET). Confirm dynamic route parameters use Promise signature to silence Next.js 15 warnings.
 
-Deployment checklist:
-✅ TypeScript clean
-✅ ESLint clean
-✅ Collections & globals registered
-✅ Plugins active (nested docs, S3, lexical, brevo)
+### Environment Variables for Vercel Dashboard
+Copy these environment variables to your Vercel project settings:
+
+**Required:**
+```
+DATABASE_URI=your-mongodb-connection-string
+PAYLOAD_SECRET=your-secure-secret-key
+```
+
+**S3 Storage (Required for media uploads):**
+```
+S3_BUCKET=your-s3-bucket-name
+S3_ACCESS_KEY_ID=your-access-key-id
+S3_SECRET_ACCESS_KEY=your-secret-access-key
+S3_REGION=your-region
+S3_ENDPOINT=your-s3-endpoint
+```
+
+**Brevo Email (Optional):**
+```
+BREVO_API_KEY=your-brevo-api-key
+BREVO_EMAILS_ACTIVE=true
+BREVO_SENDER_NAME=Your App Name
+BREVO_SENDER_EMAIL=noreply@yourapp.com
+```
+
+### Deployment Steps:
+1. Connect your repository to Vercel
+2. Configure environment variables in Vercel dashboard
+3. Deploy - Vercel will automatically run `npm run build`
+4. Your app will be available at your Vercel-provided URL
+
+### Build Status:
+✅ **TypeScript compilation**: No errors  
+✅ **ESLint linting**: No warnings  
+✅ **Build artifacts**: Generated successfully  
+✅ **Dynamic rendering**: Configured for database-dependent pages  
+✅ **Type safety**: Proper Media type guards implemented  
+✅ **Vercel config**: Optimized for deployment  
+✅ **Ready for production deployment**
+
+### Technical Notes:
+- Pages requiring database access use `dynamic = 'force-dynamic'` for server-side rendering
+- Type guards implemented for Media vs string types to prevent build errors
+- All ESLint warnings resolved with proper TypeScript types
+- Vercel configuration file included for optimal deployment settings
 
 ---
 

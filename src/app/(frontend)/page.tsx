@@ -7,7 +7,15 @@ import { Card, CardHeader, CardFooter } from '@heroui/card'
 import { Button } from '@heroui/button'
 
 import config from '@/payload.config'
+import type { Media } from '@/payload-types'
 import './styles.css'
+
+export const dynamic = 'force-dynamic'
+
+// Type guard to check if image is a Media object
+const isMediaObject = (image: string | Media): image is Media => {
+  return typeof image === 'object' && image !== null && 'alt' in image && 'url' in image
+}
 
 export const metadata = {
   description: 'An app to find local farmshops.',
@@ -97,16 +105,22 @@ export default async function HomePage() {
           </div>
         </div>
         <div className="flex flex-col xl:w-[calc(1280px*0.9)] 2xl:w-[calc(1536px*0.9)] md:flex-row w-full justify-between items-center gap-3 mt-6">
-          {activeHome?.btImages?.map((farm) => (
-            <div key={farm.id} className="w-full">
-              <HeroUiImage
-                isBlurred
-                alt={farm.image.alt}
-                className="w-[1000px] h-[350px] object-cover"
-                src={farm.image.url}
-              />
-            </div>
-          ))}
+          {activeHome?.btImages?.map((farm) => {
+            const farmImage = farm.image
+            const imageAlt = isMediaObject(farmImage) ? farmImage.alt : 'Farm image'
+            const imageUrl = isMediaObject(farmImage) ? farmImage.url : farmImage
+            
+            return (
+              <div key={farm.id} className="w-full">
+                <HeroUiImage
+                  isBlurred
+                  alt={imageAlt}
+                  className="w-[1000px] h-[350px] object-cover"
+                  src={imageUrl || ''}
+                />
+              </div>
+            )
+          })}
         </div>
       </div>
     </>
