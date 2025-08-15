@@ -9,6 +9,7 @@ import { Button } from '@heroui/button'
 import config from '@/payload.config'
 import type { Media } from '@/payload-types'
 import './styles.css'
+import { BlocksRenderer } from '@/module/blockRender/BlocksRenderer'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,6 +47,9 @@ export default async function HomePage() {
   return (
     <>
       <div className="flex flex-col justify-center px-6">
+        <div>
+          <BlocksRenderer blocks={activeHome?.blocks || []} />
+        </div>
         <div>
           <Card
             isFooterBlurred

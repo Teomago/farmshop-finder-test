@@ -3,9 +3,11 @@
 import React from 'react'
 import { Card, CardFooter } from '@heroui/card'
 import { Image as HeroUiImage } from '@heroui/image'
-import type { Farm } from '@/payload-types'
+import { Farm, Media } from '@/payload-types'
+import { isExpanded } from '@/utils/isExpanded'
+import { RichText } from '@/module/richText'
 
-export default function FarmDetail({ farm }: { farm: Farm }) {
+export default function FarmDetail({ farm }: { farm: Farm | null }) {
   if (!farm) return null
 
   return (
@@ -21,7 +23,8 @@ export default function FarmDetail({ farm }: { farm: Farm }) {
             }
             className="z-0 w-full h-[350px] object-cover"
             src={
-              typeof farm.farmImage === 'object' && farm.farmImage?.url ? farm.farmImage.url : ''
+              // typeof farm.farmImage === 'object' && farm.farmImage?.url ? farm.farmImage.url : ''
+              isExpanded<Media>(farm.farmImage) && farm.farmImage?.url ? farm.farmImage.url : ''
             }
           />
           <CardFooter className="absolute bg-white/30 bottom-0 border-t-1 border-zinc-100/50 z-10 justify-between w-full">
@@ -35,8 +38,12 @@ export default function FarmDetail({ farm }: { farm: Farm }) {
         {/* Farm description placeholder (richText pending) */}
         <div className="flex flex-col xl:w-2/3 gap-3 justify-center">
           <h2 className="text-xl font-semibold">About this farm</h2>
-          <div className="text-sm text-black/70 italic border rounded p-4 bg-white/50">
-            tu descripcion aqui (richText farm pendiente)
+          <div className="text-sm text-black/70 border rounded p-4 bg-white/50">
+            {farm.description ? (
+              <RichText data={farm.description as SerializedEditorState<SerializedLexicalNode>} />
+            ) : (
+              <div className="italic opacity-70">No description provided yet.</div>
+            )}
           </div>
         </div>
         <div className="hidden xl:block col-span-1" />
@@ -67,13 +74,16 @@ export default function FarmDetail({ farm }: { farm: Farm }) {
                     <div className="flex justify-between gap-4">
                       <div className="font-bold text-2xl">
                         {prod ? prod.name : 'Product'}
+                        {/* {p?.variantKey ? (
+                          <span className="opacity-70"> · {p.variantKey}</span>
+                        ) : null} */}
                       </div>
                       <div className="font-bold text-2xl">€{p.price?.toFixed?.(2) ?? '0.00'}</div>
                     </div>
                     <div className="text-xs opacity-70">Qty: {p.quantity}</div>
                     {/* Product description placeholder (richText pending) */}
                     <div className="text-xs text-black/60 italic mt-auto">
-                      tu descripcion aqui (richText producto pendiente)
+                      <RichText data={prod?.description} />
                     </div>
                   </CardFooter>
                 </Card>

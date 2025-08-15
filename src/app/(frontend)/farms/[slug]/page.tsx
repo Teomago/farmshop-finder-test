@@ -22,6 +22,13 @@ async function getFarmBySlugOrId(slugOrId: string) {
   } catch {
     return null
   }
+  // const result = await payload.find({
+  //   collection: 'farms',
+  //   limit: 1,
+  //   where: {
+  //     or: [{ slug: { equals: slugOrId } }, { id: { equals: slugOrId } }],
+  //   },
+  // })
 }
 
 export default async function FarmDetailPage({ params }: { params: Promise<{ slug: string }> }) {

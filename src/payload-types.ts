@@ -183,13 +183,7 @@ export interface Page {
   slug?: string | null;
   layout?:
     | (
-        | {
-            title: string;
-            subtitle: string;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'cover';
-          }
+        | CoverBlockType
         | {
             content: {
               root: {
@@ -231,6 +225,17 @@ export interface Page {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CoverBlockType".
+ */
+export interface CoverBlockType {
+  title: string;
+  subtitle: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'cover';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -458,14 +463,7 @@ export interface PagesSelect<T extends boolean = true> {
   layout?:
     | T
     | {
-        cover?:
-          | T
-          | {
-              title?: T;
-              subtitle?: T;
-              id?: T;
-              blockName?: T;
-            };
+        cover?: T | CoverBlockTypeSelect<T>;
         richText?:
           | T
           | {
@@ -494,6 +492,16 @@ export interface PagesSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CoverBlockType_select".
+ */
+export interface CoverBlockTypeSelect<T extends boolean = true> {
+  title?: T;
+  subtitle?: T;
+  id?: T;
+  blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
