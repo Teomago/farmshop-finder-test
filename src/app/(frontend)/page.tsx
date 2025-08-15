@@ -48,9 +48,6 @@ export default async function HomePage() {
     <>
       <div className="flex flex-col justify-center px-6">
         <div>
-          <BlocksRenderer blocks={activeHome?.blocks || []} />
-        </div>
-        <div>
           <Card
             isFooterBlurred
             className="w-full h-[calc(800px*0.85)] sm:h-[475px] md:h-[650px] xl:w-[calc(1280px*0.9)] 2xl:w-[calc(1536px*0.9)]"
@@ -113,7 +110,7 @@ export default async function HomePage() {
             const farmImage = farm.image
             const imageAlt = isMediaObject(farmImage) ? farmImage.alt : 'Farm image'
             const imageUrl = isMediaObject(farmImage) ? farmImage.url : farmImage
-            
+
             return (
               <div key={farm.id} className="w-full">
                 <HeroUiImage
