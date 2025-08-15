@@ -19,6 +19,10 @@ h2 {
   @apply text-5xl my-4;
 }
 
+h3 {
+  @apply text-3xl my-4;
+}
+
 p {
   @apply text-xl;
 }

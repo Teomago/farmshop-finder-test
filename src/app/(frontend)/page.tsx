@@ -9,6 +9,7 @@ import { Button } from '@heroui/button'
 import config from '@/payload.config'
 import type { Media } from '@/payload-types'
 import './styles.css'
+import { BlocksRenderer } from '@/module/blockRender/BlocksRenderer'
 
 export const dynamic = 'force-dynamic'
 
@@ -109,7 +110,7 @@ export default async function HomePage() {
             const farmImage = farm.image
             const imageAlt = isMediaObject(farmImage) ? farmImage.alt : 'Farm image'
             const imageUrl = isMediaObject(farmImage) ? farmImage.url : farmImage
-            
+
             return (
               <div key={farm.id} className="w-full">
                 <HeroUiImage

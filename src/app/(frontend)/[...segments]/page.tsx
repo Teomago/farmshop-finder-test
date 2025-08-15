@@ -2,6 +2,7 @@ import { getPageByPathname } from '@/module/common/data'
 import { resolvePathname } from '@/utils/resolvePathname'
 import { notFound } from 'next/navigation'
 import React from 'react'
+import { BlocksRenderer } from '@/module/blockRender/BlocksRenderer'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,8 +22,7 @@ const Pages = async ({ params }: Props) => {
 
   return (
     <>
-      {/* <BlocksRenderer blocks={page?.blocks} /> */}
-      {page.name}
+      <BlocksRenderer blocks={page?.layout} />
     </>
   )
 }
