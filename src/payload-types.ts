@@ -135,6 +135,8 @@ export interface UserAuthOperations {
  */
 export interface User {
   id: string;
+  role: 'admin' | 'farmer' | 'customer';
+  name: string;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -181,37 +183,7 @@ export interface Page {
   id: string;
   name: string;
   slug?: string | null;
-  layout?:
-    | (
-        | CoverBlockType
-        | {
-            content: {
-              root: {
-                type: string;
-                children: {
-                  type: string;
-                  version: number;
-                  [k: string]: unknown;
-                }[];
-                direction: ('ltr' | 'rtl') | null;
-                format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-                indent: number;
-                version: number;
-              };
-              [k: string]: unknown;
-            };
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'richText';
-          }
-        | {
-            image: string | Media;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'image';
-          }
-      )[]
-    | null;
+  layout?: (CoverBlockType | RichTextBlockType | ImageBlockType)[] | null;
   pathname?: string | null;
   parent?: (string | null) | Page;
   breadcrumbs?:
@@ -222,6 +194,14 @@ export interface Page {
         id?: string | null;
       }[]
     | null;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (string | null) | Media;
+  };
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -236,6 +216,40 @@ export interface CoverBlockType {
   id?: string | null;
   blockName?: string | null;
   blockType: 'cover';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "RichTextBlockType".
+ */
+export interface RichTextBlockType {
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'richText';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ImageBlockType".
+ */
+export interface ImageBlockType {
+  image: string | Media;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'image';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -299,6 +313,10 @@ export interface Farm {
         id?: string | null;
       }[]
     | null;
+  /**
+   * The user who owns this farm.
+   */
+  owner: string | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -417,6 +435,8 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  role?: T;
+  name?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -464,20 +484,8 @@ export interface PagesSelect<T extends boolean = true> {
     | T
     | {
         cover?: T | CoverBlockTypeSelect<T>;
-        richText?:
-          | T
-          | {
-              content?: T;
-              id?: T;
-              blockName?: T;
-            };
-        image?:
-          | T
-          | {
-              image?: T;
-              id?: T;
-              blockName?: T;
-            };
+        richText?: T | RichTextBlockTypeSelect<T>;
+        image?: T | ImageBlockTypeSelect<T>;
       };
   pathname?: T;
   parent?: T;
@@ -488,6 +496,13 @@ export interface PagesSelect<T extends boolean = true> {
         url?: T;
         label?: T;
         id?: T;
+      };
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -500,6 +515,24 @@ export interface PagesSelect<T extends boolean = true> {
 export interface CoverBlockTypeSelect<T extends boolean = true> {
   title?: T;
   subtitle?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "RichTextBlockType_select".
+ */
+export interface RichTextBlockTypeSelect<T extends boolean = true> {
+  content?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ImageBlockType_select".
+ */
+export interface ImageBlockTypeSelect<T extends boolean = true> {
+  image?: T;
   id?: T;
   blockName?: T;
 }
@@ -535,6 +568,7 @@ export interface FarmsSelect<T extends boolean = true> {
         price?: T;
         id?: T;
       };
+  owner?: T;
   updatedAt?: T;
   createdAt?: T;
 }

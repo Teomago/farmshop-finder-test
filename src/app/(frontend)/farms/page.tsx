@@ -1,9 +1,19 @@
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import Farms from '@/app/(frontend)/components/Farms'
+import type { Metadata } from 'next'
+import { getSiteURL } from '@/utils/siteUrl'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 60
+
+export const metadata: Metadata = {
+  title: 'Farms | Farmshop Finder',
+  description: 'Browse local farms and their fresh products.',
+  alternates: {
+    canonical: getSiteURL() ? `${getSiteURL()}/farms` : undefined,
+  },
+}
 
 export default async function FarmsIndexPage() {
   const payload = await getPayload({ config })

@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import FarmDetail from '@/app/(frontend)/components/FarmDetail'
+import type { Metadata, ResolvingMetadata } from 'next'
+import { getSiteURL } from '@/utils/siteUrl'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,4 +42,18 @@ export default async function FarmDetailPage({ params }: { params: Promise<{ slu
       <FarmDetail farm={farm} />
     </div>
   )
+}
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ slug: string }> },
+  _parent: ResolvingMetadata,
+): Promise<Metadata> {
+  const { slug } = await params
+  const site = getSiteURL()
+  return {
+    title: `${slug} | Farm Details`,
+    alternates: {
+      canonical: site ? `${site}/farms/${encodeURIComponent(slug)}` : undefined,
+    },
+  }
 }

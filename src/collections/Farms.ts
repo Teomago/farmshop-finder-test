@@ -8,7 +8,11 @@ export const Farms: CollectionConfig = {
     defaultColumns: ['name', 'location'],
   },
   access: {
-    read: () => true,
+    create: ({ req: { user } }) => !!user && user.role === 'farmer',
+    read: () => true, // Todos pueden leer
+    update: ({ req: { user }, data }) =>
+      !!user && user.role === 'farmer' && user.id === data.owner ? true : false,
+    delete: ({ req: { user }, data }) => !!user && user.role === 'farmer' && user.id === data.owner,
   },
   fields: [
     {
@@ -87,6 +91,17 @@ export const Farms: CollectionConfig = {
           defaultValue: 0,
         },
       ],
+    },
+    {
+      name: 'owner',
+      label: 'Owner',
+      type: 'relationship',
+      relationTo: 'users',
+      required: true,
+      admin: {
+        description: 'The user who owns this farm.',
+        readOnly: true,
+      },
     },
   ],
 }

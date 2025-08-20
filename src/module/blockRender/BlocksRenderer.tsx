@@ -1,8 +1,8 @@
 import React, { ComponentType } from 'react'
 import { blockComponents } from '@/module/blockRender/blockComponents'
-import { CoverBlockType } from '@/payload-types'
+import { CoverBlockType, ImageBlockType, RichTextBlockType } from '@/payload-types'
 
-type Block = CoverBlockType
+type Block = CoverBlockType | ImageBlockType | RichTextBlockType
 
 interface BlocksRendererProps {
   blocks: Block[] | null | undefined

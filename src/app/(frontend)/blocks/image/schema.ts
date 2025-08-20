@@ -2,6 +2,7 @@ import { Block } from 'payload'
 
 export const Image: Block = {
   slug: 'image',
+  interfaceName: 'ImageBlockType',
   fields: [
     {
       name: 'image',

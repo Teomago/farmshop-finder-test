@@ -40,7 +40,7 @@ export default function FarmDetail({ farm }: { farm: Farm | null }) {
           <h2 className="text-xl font-semibold">About this farm</h2>
           <div className="text-sm text-black/70 border rounded p-4 bg-white/50">
             {farm.description ? (
-              <RichText data={farm.description as SerializedEditorState<SerializedLexicalNode>} />
+              <RichText data={farm.description} />
             ) : (
               <div className="italic opacity-70">No description provided yet.</div>
             )}
@@ -70,19 +70,14 @@ export default function FarmDetail({ farm }: { farm: Farm | null }) {
                       />
                     )}
                   </div>
-                  <CardFooter className="absolute flex flex-col bg-white/30 bottom-0 border-t-1 border-zinc-100/50 z-10 justify-between w-full">
+                  <CardFooter className="absolute flex h-[274px] flex-col bg-white/30 bottom-0 border-t-1 border-zinc-100/50 z-10 justify-between w-full">
                     <div className="flex justify-between gap-4">
-                      <div className="font-bold text-2xl">
-                        {prod ? prod.name : 'Product'}
-                        {/* {p?.variantKey ? (
-                          <span className="opacity-70"> · {p.variantKey}</span>
-                        ) : null} */}
-                      </div>
+                      <div className="font-bold text-2xl">{prod ? prod.name : 'Product'}</div>
                       <div className="font-bold text-2xl">€{p.price?.toFixed?.(2) ?? '0.00'}</div>
                     </div>
-                    <div className="text-xs opacity-70">Qty: {p.quantity}</div>
+                    <div className="text-xl opacity-80">Qty: {p.quantity}</div>
                     {/* Product description placeholder (richText pending) */}
-                    <div className="text-xs text-black/60 italic mt-auto">
+                    <div className="mt-auto farmDetailRichText">
                       <RichText data={prod?.description} />
                     </div>
                   </CardFooter>

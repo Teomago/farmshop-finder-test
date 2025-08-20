@@ -6,6 +6,7 @@
 :root {
   --font-mono: 'Roboto Mono', monospace;
   --carrot: #d97706;
+  --orange: #ac5e04;
   --squash: #fbbf24;
   --barn: #2f3e46;
   --bone: #fcf8f3;
@@ -16,13 +17,41 @@ h1 {
 }
 
 h2 {
-  @apply text-5xl my-4;
+  @apply text-6xl my-4;
 }
 
 h3 {
+  @apply text-5xl my-4;
+}
+
+h4 {
+  @apply text-4xl my-4;
+}
+
+h5 {
   @apply text-3xl my-4;
+}
+
+h6 {
+  @apply text-2xl my-4;
 }
 
 p {
   @apply text-xl;
+}
+
+.richTextSt h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  @apply text-[var(--carrot)];
+}
+
+.farmDetailRichText h1,
+h3,
+p {
+  @apply text-white;
 }

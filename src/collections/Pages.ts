@@ -46,6 +46,8 @@ export const Pages: CollectionConfig = {
       type: 'blocks',
       blocks: [Cover, RichText, Image],
     },
+    // SEO plugin adds its own "meta" group field automatically named 'meta'
+    // so we don't manually define it here; ensure ordering (meta typically near top sidebar if needed)
     {
       name: 'pathname',
       type: 'text',

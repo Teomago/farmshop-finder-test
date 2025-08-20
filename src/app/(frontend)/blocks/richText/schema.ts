@@ -2,6 +2,7 @@ import { Block } from 'payload'
 
 export const RichText: Block = {
   slug: 'richText',
+  interfaceName: 'RichTextBlockType',
   fields: [
     {
       name: 'content',

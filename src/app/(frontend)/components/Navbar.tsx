@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useTransition } from 'react'
 import {
   Navbar,
   NavbarBrand,
@@ -15,37 +15,50 @@ import { Link } from '@heroui/link'
 import { Button } from '@heroui/button'
 import Image from 'next/image'
 import { User } from '@heroui/user'
+import { useRouter } from 'next/navigation'
+import type { User as PayloadUser } from '@/payload-types'
+import { logout } from '../login/actions/logout'
 
-import {
-  ChevronDown,
-  Scale,
-  Lock,
-  Activity,
-  Flash,
-  Server,
-  TagUser,
-} from '../icons/icons'
+import { ChevronDown, Scale, Lock, Activity, Flash, Server, TagUser } from '../icons/icons'
 
 export default function NavbarCP({
   title,
   logoUrl,
   logoAlt,
   navItems,
+  user,
 }: {
   title: string
   logoUrl: string
   logoAlt: string
   navItems: Array<{ id: string; label: string; link: string }>
+  user: PayloadUser | null
 }) {
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [currentUser, setCurrentUser] = useState<PayloadUser | null>(user)
+  const [isPending, startTransition] = useTransition()
+  const router = useRouter()
+
+  const handleLogout = () => {
+    startTransition(async () => {
+      await logout()
+      setCurrentUser(null)
+      router.push('/login')
+      router.refresh()
+    })
+  }
 
   const icons = {
     chevron: <ChevronDown fill="currentColor" size={16} height={16} width={16} />,
     scale: <Scale className="text-warning" fill="currentColor" size={30} height={30} width={30} />,
     lock: <Lock className="text-success" fill="currentColor" size={30} height={30} width={30} />,
-    activity: <Activity className="text-secondary" fill="currentColor" size={30} height={30} width={30} />,
+    activity: (
+      <Activity className="text-secondary" fill="currentColor" size={30} height={30} width={30} />
+    ),
     flash: <Flash className="text-primary" fill="currentColor" size={30} height={30} width={30} />,
-    server: <Server className="text-success" fill="currentColor" size={30} height={30} width={30} />,
+    server: (
+      <Server className="text-success" fill="currentColor" size={30} height={30} width={30} />
+    ),
     user: <TagUser className="text-danger" fill="currentColor" size={30} height={30} width={30} />,
   }
 
@@ -145,39 +158,50 @@ export default function NavbarCP({
       </NavbarContent>
 
       <NavbarContent justify="end">
-        <NavbarItem>
-          <Dropdown>
-            <DropdownTrigger>
-              <User
-                as="button"
-                avatarProps={{
-                  isBordered: true,
-                  src: '/api/media/file/teo_avatar.png',
-                }}
-                className="transition-transform mt-1"
-                description="@teoibagon"
-                name="Mateo Ibagón"
-              />
-            </DropdownTrigger>
-            <DropdownMenu aria-label="User Actions" variant="flat">
-              <DropdownItem key="profile" className="h-14 gap-2">
-                <p className="font-bold">Signed in as</p>
-                <p className="font-bold">@tonyreichert</p>
-              </DropdownItem>
-              <DropdownItem key="admin" href="/admin">
-                My Settings
-              </DropdownItem>
-              <DropdownItem key="team_settings">Team Settings</DropdownItem>
-              <DropdownItem key="analytics">Analytics</DropdownItem>
-              <DropdownItem key="system">System</DropdownItem>
-              <DropdownItem key="configurations">Configurations</DropdownItem>
-              <DropdownItem key="help_and_feedback">Help & Feedback</DropdownItem>
-              <DropdownItem key="logout" color="danger">
-                Log Out
-              </DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
-        </NavbarItem>
+        {currentUser ? (
+          <NavbarItem>
+            <Dropdown>
+              <DropdownTrigger>
+                <User
+                  as="button"
+                  avatarProps={{
+                    isBordered: true,
+                    src: '/api/media/file/teo_avatar.png',
+                  }}
+                  className="transition-transform mt-1"
+                  description={currentUser.email || ''}
+                  name={currentUser.name || currentUser.email}
+                />
+              </DropdownTrigger>
+              <DropdownMenu aria-label="User Actions" variant="flat">
+                <DropdownItem key="profile" className="h-14 gap-2">
+                  <p className="font-bold">Signed in as</p>
+                  <p className="font-bold">{currentUser.name || currentUser.email}</p>
+                </DropdownItem>
+                <DropdownItem key="admin" href="/dashboard">
+                  My Settings
+                </DropdownItem>
+                <DropdownItem
+                  key="logout"
+                  color="danger"
+                  onClick={handleLogout}
+                  className={isPending ? 'opacity-60' : ''}
+                >
+                  {isPending ? 'Logging out...' : 'Log Out'}
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
+          </NavbarItem>
+        ) : (
+          <NavbarItem>
+            <Button
+              onClick={() => router.push('/login')}
+              className="text-white bg-transparent border border-white"
+            >
+              Login
+            </Button>
+          </NavbarItem>
+        )}
       </NavbarContent>
       <NavbarMenu>
         {navItems.map((item, index) => (

@@ -7,7 +7,12 @@ export const Products: CollectionConfig = {
     defaultColumns: ['name', 'productType'],
   },
   access: {
-    read: () => true,
+    create: ({ req: { user } }) => !!user && user.role === 'farmer', // Solo los 'farmers' pueden crear
+    read: () => true, // Todos pueden leer
+    update: ({ req: { user }, data }) =>
+      !!user && user.role === 'farmer' && user.id === data.farm.owner ? true : false, // Solo el dueño de la granja puede actualizar
+    delete: ({ req: { user }, data }) =>
+      !!user && user.role === 'farmer' && user.id === data.farm.owner ? true : false, // Solo el dueño de la granja puede eliminar
   },
   fields: [
     {

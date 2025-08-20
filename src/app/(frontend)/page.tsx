@@ -9,7 +9,6 @@ import { Button } from '@heroui/button'
 import config from '@/payload.config'
 import type { Media } from '@/payload-types'
 import './styles.css'
-import { BlocksRenderer } from '@/module/blockRender/BlocksRenderer'
 
 export const dynamic = 'force-dynamic'
 
@@ -91,17 +90,17 @@ export default async function HomePage() {
         </div>
         <div className="flex flex-col w-full contain-content text-black items-center justify-center my-4 xl:w-[calc(1280px*0.9)] 2xl:w-[calc(1536px*0.9)]">
           <div className="flex flex-col items-center justify-center my-2">
-            <h1>{activeHome?.bigSection.title}</h1>
-            <p>{activeHome?.bigSection.content}</p>
+            <h1 className="text-[var(--carrot)]">{activeHome?.bigSection.title}</h1>
+            <p className="text-[var(--barn)]!">{activeHome?.bigSection.content}</p>
           </div>
           <div className="flex flex-col items-center gap-4 justify-center md:grid md:grid-cols-2 my-2">
             <div className="md:col-span-1">
-              <h2>{activeHome?.sectionA.title}</h2>
-              <p>{activeHome?.sectionA.content}</p>
+              <h2 className="text-[var(--carrot)]">{activeHome?.sectionA.title}</h2>
+              <p className="text-[var(--barn)]!">{activeHome?.sectionA.content}</p>
             </div>
             <div className="md:col-span-1">
-              <h2>{activeHome?.sectionB.title}</h2>
-              <p>{activeHome?.sectionB.content}</p>
+              <h2 className="text-[var(--carrot)]">{activeHome?.sectionB.title}</h2>
+              <p className="text-[var(--barn)]!">{activeHome?.sectionB.content}</p>
             </div>
           </div>
         </div>

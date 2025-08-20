@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 import { s3Storage } from '@payloadcms/storage-s3'
 import { nestedDocsPlugin } from '@payloadcms/plugin-nested-docs'
+import { seoPlugin } from '@payloadcms/plugin-seo'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
@@ -66,6 +67,13 @@ export default buildConfig({
       //Do not change the `.replace` below. It ensures that "/" is allowed for the slug, with breadcrumbs
       generateURL: (docs) =>
         docs.reduce((url, doc) => `${url}/${doc.slug}`.replace(/^\/+/, '/'), ''),
+    }),
+    seoPlugin({
+      collections: ['pages'],
+      globals: [],
+      uploadsCollection: 'media',
+      generateDescription: ({ doc }) => (doc?.name ? `Learn more about ${doc.name}` : ''),
+      tabbedUI: true,
     }),
   ],
   email: brevoAdapter(),

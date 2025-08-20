@@ -26,7 +26,9 @@ Discover local farms, their products, and manage structured content dynamically.
 17. Deployment (Vercel)
 18. Roadmap / TODO
 19. Quick Code Examples
-20. Final Notes
+20. Authentication & Access Control (Implemented)
+21. SEO & Indexing Infrastructure (Implemented)
+22. Final Notes
 
 ---
 
@@ -165,7 +167,7 @@ Server vs Client: Only mark UI pieces using state/effects/HeroUI as client.
 | Collection | Products | Master product catalog |
 | Collection | Farms | Farm entities + product inventory linkage |
 | Collection | Media | Asset uploads (S3) |
-| Collection | Users | Admin users (auth) |
+| Collection | Users | Admin + public users (role + auth) |
 
 Farms excerpt:
 ```ts
@@ -177,7 +179,37 @@ Farms excerpt:
 ]}
 ```
 
-Products excerpt:
+Users (extended):
+```ts
+export const Users: CollectionConfig = {
+  slug: 'users',
+  auth: { tokenExpiration: 7200, maxLoginAttempts: 5, lockTime: 10 * 60 * 1000 },
+  fields: [
+    { name: 'role', type: 'select', required: true, options: [
+      { label: 'Admin', value: 'admin' },
+      { label: 'Farmer', value: 'farmer' },
+      { label: 'Customer', value: 'customer' },
+    ]},
+    { name: 'name', type: 'text', required: true },
+  ],
+}
+```
+
+Farms access (owner + role based):
+```ts
+access: {
+  create: ({ req: { user } }) => !!user && user.role === 'farmer',
+  read: () => true,
+  update: ({ req: { user }, data }) => !!user && user.role === 'farmer' && user.id === data.owner,
+  delete: ({ req: { user }, data }) => !!user && user.role === 'farmer' && user.id === data.owner,
+},
+fields: [
+  // ...
+  { name: 'owner', type: 'relationship', relationTo: 'users', required: true, admin: { readOnly: true } },
+]
+```
+
+Products excerpt (access ties into farm ownership via embedded relationship path):
 ```ts
 { name: 'productType', type: 'select', options: ['produce','dairy','meat','poultry'], required: true }
 ```
@@ -283,6 +315,15 @@ Configured through `@payloadcms/storage-s3` (media collection). `forcePathStyle:
 - Wraps Axios POST to Brevo API.
 
 ### Slug Utilities
+### Authentication Helpers (NEW)
+- `login` server action: delegates to `payload.login`, sets HTTP-only `payload-token` cookie.
+- `logout` server action: deletes `payload-token` cookie.
+- `getUser` server action: wraps `payload.auth({ headers })` to resolve current user for server components.
+- Dynamic navbar receives `user` from `HeaderServer` (server component) instead of reading `localStorage` (removed). This avoids hydration mismatch and keeps auth trust anchored on secure cookie.
+
+### Site URL Utility (NEW)
+- `getSiteURL()` normalizes a base site URL (trims trailing slash) and is used to build canonical URLs, sitemap entries, robots reference—kept isolated so future multi‑tenant logic can plug in without touching rendering code.
+
 - `slug()` field factory merges overrides using `deepMerge`.
 - `formatSlug` ensures consistent casing & hyphenation.
 - `generateId` uses crypto safe random base64url fragment.
@@ -451,6 +492,65 @@ export const slug = (fieldToUse = 'title', overrides = {}) => deepMerge({
 ---
 
 ## 20. Final Notes
+_(Section numbering shifted: original Final Notes moved to 22 after adding implemented Auth & SEO sections.)_
+
+## 20. Authentication & Access Control (Implemented)
+
+### Summary
+Initial authentication integration now operates fully server-side using Payload's auth system and HTTP-only cookies. The previous client-only `localStorage` token check was removed to improve security and correctness.
+
+### Key Pieces
+- **Server Auth Resolution**: `HeaderServer` calls `payload.auth({ headers })` and passes the resolved `user` into `NavbarCP`.
+- **Navbar Conditional UI**: Renders user dropdown (email, settings, logout) if `user` exists; otherwise shows Login button.
+- **Protected Segment**: The `(frontend)/(authenticated)/layout.tsx` layout invokes `getUser()` and calls `redirect('/login')` if no authenticated user (guards child routes like `/dashboard`).
+- **Logout Flow**: Server action deletes cookie then triggers client redirect; UI shows pending state during transition.
+- **Role Field & Name**: Added to Users; access policies for Farms/Products now consult `user.role` and ownership for mutation paths.
+
+### Benefits
+- Avoids exposing raw tokens to JS.
+- Prevents stale UI (server decides auth state each request).
+- Clear authorization boundaries at collection level (create/update/delete rules).
+
+### Future Enhancements (Deferred)
+- Refresh token / silent re-auth (if session extension needed).
+- Customer-facing separate auth flows and passwordless login.
+- Central auth context bridging server -> client via React cache if needed for heavy client interactivity.
+
+## 21. SEO & Indexing Infrastructure (Implemented)
+
+### Components Added
+- **SEO Plugin**: Integrated `@payloadcms/plugin-seo` for Pages collection (auto-added `meta` group: title, description, image fields).
+- **Dynamic Metadata**: `generateMetadata` implemented for dynamic page routes and farm detail pages; builds standard meta + Open Graph + Twitter card + canonical.
+- **Canonical URLs**: Added via `alternates.canonical` in metadata objects (Home, Farms index, Farm detail, and dynamic Pages).
+- **Sitemap Generator**: `app/sitemap.ts` returns an array (Next.js App Router format) enumerating static roots, published Pages, and Farms.
+- **Robots.txt Route**: `app/robots.txt/route.ts` serves crawl directives and references sitemap.
+- **Utility**: `getSiteURL()` centralizes base URL formatting (used across metadata, sitemap, robots).
+
+### Metadata Structure Example
+```ts
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: page.meta?.title || page.name,
+    description: page.meta?.description || fallback,
+    alternates: { canonical: base + pathname },
+    openGraph: { title, description, images },
+    twitter: { title, description, images: images?.map(i => i.url), card: 'summary' },
+  }
+}
+```
+
+### Benefits
+- Eliminates duplicate content ambiguity (canonical).
+- Improves discoverability and indexing speed (sitemap + robots reference).
+- Enriches social sharing previews (OG/Twitter images derived from SEO image field).
+- Centralized base URL logic reduces drift across features.
+
+### Future Enhancements (Deferred)
+- Structured data (JSON-LD) for Farms (`LocalBusiness`) and Products (`Product` with Offers).
+- Multi-language `hreflang` alternates.
+- Per-collection sitemap splitting if scale demands.
+- Image optimization pipeline signals (dimensions, mime) in OG tags.
+
 This README favors completeness over brevity while eliminating redundant duplication. Each major system (installation, styling, data modeling, slug pipeline, dynamic rendering, future user roles & commerce features) is documented once in a dedicated section. Update types after schema changes (`pnpm payload generate:types`) before adjusting client components.
 
 Ongoing documentation: keep this file updated as roadmap items are delivered.
