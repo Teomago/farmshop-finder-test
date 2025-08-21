@@ -1,10 +1,10 @@
-import { Farm } from '@/payload-types'
+import { Farm, Page, Product } from '@/payload-types'
 import { SerializedLinkNode } from '@payloadcms/richtext-lexical'
 
 export const internalDocToHref = ({
   linkNode,
 }: {
-  linkNode: SerializedLinkNode | { relationTo: string; value: any }
+  linkNode: SerializedLinkNode | { relationTo: string; value: string | Page | Farm | Product }
 }): string => {
   const relationTo = 'fields' in linkNode ? linkNode.fields?.doc?.relationTo : linkNode.relationTo
   const value = 'fields' in linkNode ? linkNode.fields?.doc?.value : linkNode.value
@@ -13,12 +13,14 @@ export const internalDocToHref = ({
 
   switch (relationTo) {
     case 'pages':
-      return `${value?.pathname}`
+      const page = value as Page
+      return `${page?.pathname || '/'}`
     case 'farms':
       const farm = value as Farm
       return `/farms/${farm.slug || farm.id}`
     case 'products':
-      return `/products/${value.id}`
+      const product = value as Product
+      return `/products/${product.id}`
     default:
       return '/'
   }

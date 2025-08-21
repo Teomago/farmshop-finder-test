@@ -194,7 +194,7 @@ export default function NavbarCP({
           <>
             <NavbarItem>
               <Button
-                onPress={(e) => {
+                onPress={(_e) => {
                   router.push('/signup')
                   router.refresh()
                 }}

@@ -9,7 +9,7 @@ const DashboardPage = () => {
         Welcome to your Dashboard
       </h1>
       <p className="text-lg mt-4 text-[var(--barn)]!">
-        I don't know what to put in here but, well, we're here
+        I don&apos;t know what to put in here but, well, we&apos;re here
       </p>
     </div>
   )
