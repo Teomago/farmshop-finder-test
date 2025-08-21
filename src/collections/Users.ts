@@ -2,13 +2,10 @@ import type { CollectionConfig } from 'payload'
 
 export const Users: CollectionConfig = {
   slug: 'users',
+  auth: true,
   admin: {
     useAsTitle: 'email',
-  },
-  auth: {
-    tokenExpiration: 7200,
-    maxLoginAttempts: 5,
-    lockTime: 10 * 60 * 1000, // 24 hours
+    description: 'Usuarios de la aplicación (Farmers y Customers).',
   },
   fields: [
     {
@@ -16,10 +13,6 @@ export const Users: CollectionConfig = {
       label: 'Role',
       type: 'select',
       options: [
-        {
-          label: 'Admin',
-          value: 'admin',
-        },
         {
           label: 'Farmer',
           value: 'farmer',

@@ -8,7 +8,9 @@ const DashboardPage = () => {
       <h1 className="text-5xl! md:text-6xl! text-center font-bold text-[var(--carrot)]!">
         Welcome to your Dashboard
       </h1>
-      <p className="text-lg mt-4 text-[var(--barn)]!">This is your starting point after login.</p>
+      <p className="text-lg mt-4 text-[var(--barn)]!">
+        I don't know what to put in here but, well, we're here
+      </p>
     </div>
   )
 }

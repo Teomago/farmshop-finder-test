@@ -167,7 +167,8 @@ Server vs Client: Only mark UI pieces using state/effects/HeroUI as client.
 | Collection | Products | Master product catalog |
 | Collection | Farms | Farm entities + product inventory linkage |
 | Collection | Media | Asset uploads (S3) |
-| Collection | Users | Admin + public users (role + auth) |
+| Collection | Admins | Admin panel only (separate auth collection) |
+| Collection | Users | Frontend end-users (`farmer`, `customer`) |
 
 Farms excerpt:
 ```ts
@@ -179,21 +180,47 @@ Farms excerpt:
 ]}
 ```
 
-Users (extended):
+User model split (Admins vs Users):
+
+We migrated from a single `users` collection with an `admin` role to two separate auth-enabled collections for clearer security boundaries:
+
+1. `admins` — ONLY for Payload admin panel access.
+2. `users`  — Application end‑users (`farmer`, `customer`).
+
+Key reasons:
+- Prevent accidental front‑end assumptions about an `admin` behaving like an app user.
+- Easier to hard‑gate front‑end UI by `user.collection === 'users'`.
+- Reduced risk of privilege escalation via mixed-role documents.
+
+Admins collection:
 ```ts
-export const Users: CollectionConfig = {
-  slug: 'users',
-  auth: { tokenExpiration: 7200, maxLoginAttempts: 5, lockTime: 10 * 60 * 1000 },
+export const Admins: CollectionConfig = {
+  slug: 'admins',
+  auth: true,
+  admin: { useAsTitle: 'email' },
   fields: [
-    { name: 'role', type: 'select', required: true, options: [
-      { label: 'Admin', value: 'admin' },
-      { label: 'Farmer', value: 'farmer' },
-      { label: 'Customer', value: 'customer' },
-    ]},
     { name: 'name', type: 'text', required: true },
   ],
 }
 ```
+
+Users collection:
+```ts
+export const Users: CollectionConfig = {
+  slug: 'users',
+  auth: true,
+  admin: { useAsTitle: 'email', description: 'App users (farmer | customer)' },
+  fields: [
+    { name: 'role', type: 'select', required: true, options: [
+        { label: 'Farmer', value: 'farmer' },
+        { label: 'Customer', value: 'customer' },
+      ] },
+    { name: 'name', type: 'text', required: true },
+  ],
+}
+```
+
+Front‑end auth logic explicitly ignores authenticated `admins` (treats them as guest in public UI) by checking the `collection` property returned by `payload.auth`.
 
 Farms access (owner + role based):
 ```ts
@@ -467,12 +494,18 @@ Testing & Quality:
 ---
 
 ## 19. Quick Code Examples
-Fetch farms:
+
+### 19.1 Fetch Farms (Server Component)
 ```ts
-const payload = await getPayload({ config })
-const farms = await payload.find({ collection: 'farms', limit: 50, depth: 1 })
+import { getPayload } from 'payload'
+import config from '@/payload.config'
+export async function listFarms(limit = 50) {
+  const payload = await getPayload({ config })
+  return payload.find({ collection: 'farms', limit, depth: 1 })
+}
 ```
-Fetch farm by slug with ID fallback:
+
+### 19.2 Fetch Farm By Slug OR ID
 ```ts
 async function getFarmBySlugOrId(slugOrId: string) {
   const payload = await getPayload({ config })
@@ -481,7 +514,8 @@ async function getFarmBySlugOrId(slugOrId: string) {
   try { return await payload.findByID({ collection: 'farms', id: slugOrId }) } catch { return null }
 }
 ```
-Slug factory excerpt:
+
+### 19.3 Slug Field Factory
 ```ts
 export const slug = (fieldToUse = 'title', overrides = {}) => deepMerge({
   name: 'slug', type: 'text', index: true, unique: true,
@@ -489,32 +523,113 @@ export const slug = (fieldToUse = 'title', overrides = {}) => deepMerge({
 }, overrides)
 ```
 
+### 19.4 Auth Server Actions (Login / Logout / Signup)
+```ts
+'use server'
+// login.ts
+import { getPayload } from 'payload'; import config from '@/payload.config'; import { cookies } from 'next/headers'
+export async function login({ email, password }: { email: string; password: string }) {
+  const payload = await getPayload({ config })
+  try {
+    const res = await payload.login({ collection: 'users', data: { email, password } })
+    if (res.token) (await cookies()).set('payload-token', res.token, { httpOnly: true, path: '/', secure: process.env.NODE_ENV==='production' })
+    return { success: true }
+  } catch (e:any) { return { success: false, error: e.message } }
+}
+
+// logout.ts
+export async function logout() { (await cookies()).delete('payload-token') }
+
+// register.ts
+export async function register(data: { name: string; email: string; password: string; role: 'farmer'|'customer' }) {
+  const payload = await getPayload({ config })
+  const exists = await payload.find({ collection: 'users', where: { email: { equals: data.email } }, limit: 1 })
+  if (exists.docs.length) return { success: false, error: 'Email already registered' }
+  await payload.create({ collection: 'users', data })
+  return login({ email: data.email, password: data.password })
+}
+```
+
+### 19.5 useAuth Hook (Client) Consumption
+```tsx
+'use client'
+import { useAuth } from '@/app/(frontend)/hooks/useAuth'
+export function AuthStatus() {
+  const { user, isLoading } = useAuth()
+  if (isLoading) return <span>Loading...</span>
+  if (!user) return <a href="/login">Login</a>
+  return <span>Hi {user.name || user.email}</span>
+}
+```
+
+### 19.6 Mutation Pattern With Cache Invalidation
+```tsx
+import { useQueryClient } from '@tanstack/react-query'
+import { login } from '@/app/(frontend)/login/actions/login'
+const qc = useQueryClient()
+async function onSubmit(form:{email:string;password:string}) {
+  const r = await login(form)
+  if (r.success) qc.invalidateQueries({ queryKey: ['user'] })
+}
+```
+
+### 19.7 Protected Server Page Pattern
+```ts
+import { getPayload } from 'payload'; import config from '@/payload.config'; import { redirect } from 'next/navigation'
+export default async function DashboardPage() {
+  const payload = await getPayload({ config })
+  const { user } = await payload.auth({ headers: await import('next/headers').then(m=>m.headers()) })
+  if (!user || user.collection !== 'users') redirect('/login')
+  return <div>Dashboard for {user.email}</div>
+}
+```
+
+### 19.8 Example Farmer-Only Create Farm Action
+```ts
+'use server'
+import { getPayload } from 'payload'; import config from '@/payload.config'
+export async function createFarm({ name, location }: { name: string; location?: string }) {
+  const payload = await getPayload({ config })
+  // NOTE: additional auth check (payload.auth) could be added if not called from already protected UI
+  return payload.create({ collection: 'farms', data: { name, location } })
+}
+```
+
+### 19.9 Admin vs User UI Filter
+```tsx
+const { user } = useAuth()
+const isAppUser = user?.collection === 'users'
+```
+
 ---
 
 ## 20. Final Notes
 _(Section numbering shifted: original Final Notes moved to 22 after adding implemented Auth & SEO sections.)_
 
-## 20. Authentication & Access Control (Implemented)
+## 20. Authentication & Access Control (Implemented & Updated with React Query)
 
 ### Summary
 Initial authentication integration now operates fully server-side using Payload's auth system and HTTP-only cookies. The previous client-only `localStorage` token check was removed to improve security and correctness.
 
 ### Key Pieces
-- **Server Auth Resolution**: `HeaderServer` calls `payload.auth({ headers })` and passes the resolved `user` into `NavbarCP`.
-- **Navbar Conditional UI**: Renders user dropdown (email, settings, logout) if `user` exists; otherwise shows Login button.
-- **Protected Segment**: The `(frontend)/(authenticated)/layout.tsx` layout invokes `getUser()` and calls `redirect('/login')` if no authenticated user (guards child routes like `/dashboard`).
-- **Logout Flow**: Server action deletes cookie then triggers client redirect; UI shows pending state during transition.
-- **Role Field & Name**: Added to Users; access policies for Farms/Products now consult `user.role` and ownership for mutation paths.
+- **Collection Split**: `admins` (panel) vs `users` (frontend). Frontend disregards `admins` sessions.
+- **Client Session State**: `useAuth` (TanStack Query) fetches `/api/users/me` and caches the current app user.
+- **Navbar Conditional UI**: Uses `useAuth` and filters `user.collection === 'users'`.
+- **Protected Routes**: Server components still gate sensitive pages using `payload.auth` (e.g., dashboard) before rendering.
+- **Mutations**: `login`, `logout`, `register` server actions manage cookie + invalidate `['user']` cache on client.
+- **Access Logic**: Collections (`Farms`, `Products`, `Carts`) check `req.user.collection` + role where applicable.
+- **Owner Enforcement**: Farm updates/deletes restricted to matching `owner` or admin collection.
 
 ### Benefits
-- Avoids exposing raw tokens to JS.
-- Prevents stale UI (server decides auth state each request).
-- Clear authorization boundaries at collection level (create/update/delete rules).
+- Secure: Cookies remain HTTP-only; no token exposure.
+- Responsive UI: React Query cache updates instantly after mutations.
+- Separation of concerns: Server enforces, client reflects.
+- Extensible: Adding new queries (products, farms) only needs a `useQuery` wrapper.
 
 ### Future Enhancements (Deferred)
-- Refresh token / silent re-auth (if session extension needed).
-- Customer-facing separate auth flows and passwordless login.
-- Central auth context bridging server -> client via React cache if needed for heavy client interactivity.
+- Hydrate `useAuth` with `initialData` from server layout to eliminate first fetch.
+- Add optimistic cart/product mutations with `useMutation`.
+- Optional passwordless or magic-link flow.
 
 ## 21. SEO & Indexing Infrastructure (Implemented)
 
@@ -554,6 +669,153 @@ export async function generateMetadata(): Promise<Metadata> {
 This README favors completeness over brevity while eliminating redundant duplication. Each major system (installation, styling, data modeling, slug pipeline, dynamic rendering, future user roles & commerce features) is documented once in a dedicated section. Update types after schema changes (`pnpm payload generate:types`) before adjusting client components.
 
 Ongoing documentation: keep this file updated as roadmap items are delivered.
+
+## 23. Client State Management with TanStack Query & Auth Methodology
+
+### Overview
+We integrated **TanStack Query (@tanstack/react-query)** to manage client-side server state (current user session, future data lists) while retaining **Server Actions** / server utilities for privileged mutations and page-level protection. This yields: centralized caching, automatic revalidation, and clear separation of trust boundaries.
+
+### Decision Matrix (What to use & When)
+| Goal | Use | Why |
+|------|-----|-----|
+| Read data for UI (cache, refetch, share across components) | `useQuery` (TanStack Query) | Smart caching, deduped requests, background revalidation |
+| Perform privileged mutation (login, logout, signup, create farm, etc.) | Server Action (`'use server'`) or API route + then `queryClient.invalidateQueries` | Runs only on server; protects secrets & business logic |
+| Protect an entire page/segment (redirect if unauthorized) | Server component logic (`await payload.auth`) | Enforces access before rendering HTML |
+| Combine initial server data + client hydration | Fetch on server, pass as initial data to `useQuery` (optional) | Avoid double fetch & preserve SSR SEO |
+
+### Architectural Roles
+1. **Server Actions / API routes**: Authority for writes & secure reads.
+2. **TanStack Query**: Client orchestrator (caching, lifecycle, stale control).
+3. **useAuth hook**: Single source of truth for current user on client.
+4. **Protected layouts/pages**: Hard gate with server-side `payload.auth`.
+
+### Core Auth Pieces
+Query provider (`src/app/(frontend)/providers/queryProvider.tsx`):
+```tsx
+'use client'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useState } from 'react'
+export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
+  const [qc] = useState(() => new QueryClient({
+    defaultOptions: { queries: { staleTime: 60_000 } },
+  }))
+  return <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+}
+```
+
+Auth hook (`src/app/(frontend)/hooks/useAuth.ts`):
+```ts
+'use client'
+import { useQuery } from '@tanstack/react-query'
+import type { User } from '@/payload-types'
+export const useAuth = () => {
+  const { data, isLoading, isError } = useQuery<(User & { collection: string }) | null>({
+    queryKey: ['user'],
+    queryFn: async () => {
+      const res = await fetch('/api/users/me')
+      if (!res.ok) return null
+      const json = await res.json()
+      return json.user
+    },
+    staleTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: true,
+  })
+  return { user: data, isLoading, isError }
+}
+```
+
+Navbar consumption (simplified):
+```tsx
+const { user } = useAuth()
+return user && user.collection === 'users' ? <UserMenu /> : <AuthButtons />
+```
+
+### Server vs Client Auth Responsibilities
+| Layer | Responsibility | Example |
+|-------|----------------|---------|
+| Server Page/Layout | Gate access, redirect unauth users | `if (!user) redirect('/login')` |
+| Server Action | Mutate (login, signup, logout) | `await payload.login(...)` |
+| Client (React Query) | Cache session / reflect UI | `useAuth()` |
+| UI Component | Render conditionally | Show dropdown vs login/signup |
+
+### Mutations + Cache Invalidation Pattern
+Login action (server) example:
+```ts
+'use server'
+import { getPayload } from 'payload'
+import config from '@/payload.config'
+export async function login({ email, password }: { email: string; password: string }) {
+  const payload = await getPayload({ config })
+  try {
+    const res = await payload.login({ collection: 'users', data: { email, password } })
+    return { success: true, user: res.user }
+  } catch (e: any) {
+    return { success: false, error: e.message }
+  }
+}
+```
+
+Client form snippet:
+```tsx
+const qc = useQueryClient()
+const onSubmit = async (data: FormValues) => {
+  const r = await login(data)
+  if (r.success) {
+    qc.invalidateQueries({ queryKey: ['user'] })
+    router.push('/dashboard')
+  } else setError(r.error)
+}
+```
+
+Logout pattern:
+```tsx
+await logout()        // server action clears cookie
+queryClient.invalidateQueries({ queryKey: ['user'] })
+```
+
+### Admin vs User Handling
+Because sessions can be created from `/admin` (Admins collection) and front‑end (Users collection), we filter on the client:
+```ts
+if (user?.collection !== 'users') return null  // treat as guest
+```
+This avoids exposing farmer/customer UI to panel-only accounts.
+
+### When NOT to Use React Query
+- Simple one-off server-rendered page (SSR) with no client reuse.
+- Highly sensitive operations that should never hit a public API route (do work entirely in a server component / action and stream result).
+- Static marketing sections (use build-time or edge caching instead).
+
+### Progressive Enhancement Strategy
+1. Start with a secure server action for a feature (authoritative logic).
+2. Expose a read endpoint (if needed) for the client.
+3. Add a `useQuery` hook wrapper (error/loading states centralized).
+4. Layer mutations with invalidations.
+5. Optimize stale times and prefetch where latency matters.
+
+### Quick Reference Cheatsheet
+| Task | Pattern |
+|------|---------|
+| Get current user (client) | `useAuth()` |
+| Force refresh user cache | `queryClient.invalidateQueries({ queryKey: ['user'] })` |
+| Login | Server action → invalidate `['user']` |
+| Signup | Server action → invalidate `['user']` |
+| Logout | Server action → invalidate `['user']` |
+| Protect page | Server component + `payload.auth` + redirect |
+| Show UI only to farmers | `user?.role === 'farmer'` (after confirming `user.collection === 'users'`) |
+
+### Benefits Recap
+- Eliminates prop drilling of `user`.
+- Automatic freshness & background refetch.
+- Clear boundary: server mutates, client renders.
+- Extensible for future queries (farms list, products catalog) with minimal boilerplate.
+
+### Future Enhancements
+- Hydrate `useAuth` with `initialData` from a server layout for zero-latency first render.
+- Add `useMutation` wrappers for structured mutation error handling.
+- Introduce optimistic updates for cart interactions.
+
+---
+End of TanStack Query integration documentation.
 
 
 

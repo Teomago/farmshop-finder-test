@@ -16,7 +16,8 @@ import { Button } from '@heroui/button'
 import Image from 'next/image'
 import { User } from '@heroui/user'
 import { useRouter } from 'next/navigation'
-import type { User as PayloadUser } from '@/payload-types'
+import { useQueryClient } from '@tanstack/react-query'
+import { useAuth } from '../hooks/useAuth'
 import { logout } from '../login/actions/logout'
 
 import { ChevronDown, Scale, Lock, Activity, Flash, Server, TagUser } from '../icons/icons'
@@ -26,23 +27,22 @@ export default function NavbarCP({
   logoUrl,
   logoAlt,
   navItems,
-  user,
 }: {
   title: string
   logoUrl: string
   logoAlt: string
   navItems: Array<{ id: string; label: string; link: string }>
-  user: PayloadUser | null
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [currentUser, setCurrentUser] = useState<PayloadUser | null>(user)
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
   const handleLogout = () => {
     startTransition(async () => {
       await logout()
-      setCurrentUser(null)
+      queryClient.invalidateQueries({ queryKey: ['user'] })
       router.push('/login')
       router.refresh()
     })
@@ -62,17 +62,17 @@ export default function NavbarCP({
     user: <TagUser className="text-danger" fill="currentColor" size={30} height={30} width={30} />,
   }
 
-  const menuItems = [
-    'Profile',
-    'Dashboard',
-    'Activity',
-    'Analytics',
-    'System',
-    'Deployments',
-    'My Settings',
-    'Team Settings',
-    'Help & Feedback',
-    'Log Out',
+  const menuItems: Array<{ label: string; link: string }> = [
+    { label: 'Profile', link: '/profile' },
+    { label: 'Dashboard', link: '/dashboard' },
+    { label: 'Activity', link: '/activity' },
+    { label: 'Analytics', link: '/analytics' },
+    { label: 'System', link: '/system' },
+    { label: 'Deployments', link: '/deployments' },
+    { label: 'My Settings', link: '/settings' },
+    { label: 'Team Settings', link: '/team-settings' },
+    { label: 'Help & Feedback', link: '/help' },
+    { label: 'Log Out', link: '/logout' },
   ]
 
   return (
@@ -158,53 +158,66 @@ export default function NavbarCP({
       </NavbarContent>
 
       <NavbarContent justify="end">
-        {currentUser ? (
-          <NavbarItem>
-            <Dropdown>
-              <DropdownTrigger>
-                <User
-                  as="button"
-                  avatarProps={{
-                    isBordered: true,
-                    src: '/api/media/file/teo_avatar.png',
-                  }}
-                  className="transition-transform mt-1"
-                  description={currentUser.email || ''}
-                  name={currentUser.name || currentUser.email}
-                />
-              </DropdownTrigger>
-              <DropdownMenu aria-label="User Actions" variant="flat">
-                <DropdownItem key="profile" className="h-14 gap-2">
-                  <p className="font-bold">Signed in as</p>
-                  <p className="font-bold">{currentUser.name || currentUser.email}</p>
-                </DropdownItem>
-                <DropdownItem key="admin" href="/dashboard">
-                  My Settings
-                </DropdownItem>
-                <DropdownItem
-                  key="logout"
-                  color="danger"
-                  onClick={handleLogout}
-                  className={isPending ? 'opacity-60' : ''}
-                >
-                  {isPending ? 'Logging out...' : 'Log Out'}
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
-          </NavbarItem>
+        {user && user.collection === 'users' ? (
+          <Dropdown placement="bottom-end" className="bg-[var(--carrot)]/90">
+            <DropdownTrigger>
+              <User
+                as="button"
+                avatarProps={{
+                  isBordered: true,
+                  src: '/api/media/file/teo_avatar.png',
+                }}
+                className="transition-transform mt-1"
+                description={user.email || ''}
+                name={user.name || user.email}
+              />
+            </DropdownTrigger>
+            <DropdownMenu aria-label="User Actions" variant="flat">
+              <DropdownItem key="profile" className="h-14 gap-2">
+                <p className="font-bold">Signed in as</p>
+                <p className="font-bold">{user.name || user.email}</p>
+              </DropdownItem>
+              <DropdownItem key="admin" href="/dashboard">
+                Dashboard
+              </DropdownItem>
+              <DropdownItem
+                key="logout"
+                color="danger"
+                onClick={handleLogout}
+                className={isPending ? 'opacity-60' : ''}
+              >
+                {isPending ? 'Logging out...' : 'Log Out'}
+              </DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
         ) : (
-          <NavbarItem>
-            <Button
-              onClick={() => router.push('/login')}
-              className="text-white bg-transparent border border-white"
-            >
-              Login
-            </Button>
-          </NavbarItem>
+          <>
+            <NavbarItem>
+              <Button
+                onPress={(e) => {
+                  router.push('/signup')
+                  router.refresh()
+                }}
+                className="text-white bg-transparent"
+                href="/signup"
+              >
+                Sign Up
+              </Button>
+            </NavbarItem>
+            <NavbarItem>
+              <Button
+                as={Link}
+                className="text-white bg-transparent border border-white"
+                href="/login"
+              >
+                Login
+              </Button>
+            </NavbarItem>
+          </>
         )}
       </NavbarContent>
-      <NavbarMenu>
-        {navItems.map((item, index) => (
+      <NavbarMenu className="bg-[var(--carrot)]/90">
+        {menuItems.map((item, index) => (
           <NavbarMenuItem key={`${item}-${index}`}>
             <Link
               className="w-full"

@@ -2,6 +2,7 @@
 
 import React, { FormEvent, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import { login, LoginResponse } from '../actions/login'
 import { Form } from '@heroui/form'
 import { Input } from '@heroui/input'
@@ -11,6 +12,7 @@ export default function LoginForm() {
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -25,6 +27,7 @@ export default function LoginForm() {
     setIsPending(false)
 
     if (result.success) {
+      queryClient.invalidateQueries({ queryKey: ['user'] })
       router.push('/dashboard')
       router.refresh()
     } else {

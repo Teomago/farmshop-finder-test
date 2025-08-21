@@ -7,20 +7,25 @@ export const Products: CollectionConfig = {
     defaultColumns: ['name', 'productType'],
   },
   access: {
-    create: ({ req: { user } }) => !!user && user.role === 'farmer', // Solo los 'farmers' pueden crear
-    read: () => true, // Todos pueden leer
-    update: ({ req: { user }, data }) =>
-      !!user && user.role === 'farmer' && user.id === data.farm.owner ? true : false, // Solo el dueño de la granja puede actualizar
-    delete: ({ req: { user }, data }) =>
-      !!user && user.role === 'farmer' && user.id === data.farm.owner ? true : false, // Solo el dueño de la granja puede eliminar
+    create: ({ req: { user } }) => {
+      if (!user) return false
+      if (user.collection === 'admins') return true
+      return user.collection === 'users' && user.role === 'farmer'
+    },
+    read: () => true,
+    update: ({ req: { user } }) => {
+      if (!user) return false
+      if (user.collection === 'admins') return true
+      return user.collection === 'users' && user.role === 'farmer'
+    },
+    delete: ({ req: { user } }) => {
+      if (!user) return false
+      if (user.collection === 'admins') return true
+      return user.collection === 'users' && user.role === 'farmer'
+    },
   },
   fields: [
-    {
-      name: 'name',
-      label: 'Name',
-      type: 'text',
-      required: true,
-    },
+    { name: 'name', label: 'Name', type: 'text', required: true },
     {
       name: 'productType',
       label: 'Product Type',
@@ -40,10 +45,6 @@ export const Products: CollectionConfig = {
       relationTo: 'media',
       required: true,
     },
-    {
-      name: 'description',
-      label: 'Description',
-      type: 'richText',
-    },
+    { name: 'description', label: 'Description', type: 'richText' },
   ],
 }

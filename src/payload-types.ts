@@ -63,28 +63,33 @@ export type SupportedTimezones =
 
 export interface Config {
   auth: {
+    admins: AdminAuthOperations;
     users: UserAuthOperations;
   };
   blocks: {};
   collections: {
+    admins: Admin;
     users: User;
     media: Media;
     pages: Page;
     products: Product;
     farms: Farm;
     home: Home;
+    carts: Cart;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
   collectionsJoins: {};
   collectionsSelect: {
+    admins: AdminsSelect<false> | AdminsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     farms: FarmsSelect<false> | FarmsSelect<true>;
     home: HomeSelect<false> | HomeSelect<true>;
+    carts: CartsSelect<false> | CartsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -103,12 +108,34 @@ export interface Config {
     'home-config': HomeConfigSelect<false> | HomeConfigSelect<true>;
   };
   locale: null;
-  user: User & {
-    collection: 'users';
-  };
+  user:
+    | (Admin & {
+        collection: 'admins';
+      })
+    | (User & {
+        collection: 'users';
+      });
   jobs: {
     tasks: unknown;
     workflows: unknown;
+  };
+}
+export interface AdminAuthOperations {
+  forgotPassword: {
+    email: string;
+    password: string;
+  };
+  login: {
+    email: string;
+    password: string;
+  };
+  registerFirstUser: {
+    email: string;
+    password: string;
+  };
+  unlock: {
+    email: string;
+    password: string;
   };
 }
 export interface UserAuthOperations {
@@ -130,12 +157,41 @@ export interface UserAuthOperations {
   };
 }
 /**
+ * Usuarios con acceso al panel de administración.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "admins".
+ */
+export interface Admin {
+  id: string;
+  name: string;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+}
+/**
+ * Usuarios de la aplicación (Farmers y Customers).
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
   id: string;
-  role: 'admin' | 'farmer' | 'customer';
+  role: 'farmer' | 'customer';
   name: string;
   updatedAt: string;
   createdAt: string;
@@ -359,11 +415,36 @@ export interface Home {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "carts".
+ */
+export interface Cart {
+  id: string;
+  user: string | User;
+  farm: string | Farm;
+  items?:
+    | {
+        product: string | Product;
+        quantity: number;
+        unit: string;
+        priceSnapshot: number;
+        id?: string | null;
+      }[]
+    | null;
+  status: 'active' | 'ordered' | 'cancelled';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
   id: string;
   document?:
+    | ({
+        relationTo: 'admins';
+        value: string | Admin;
+      } | null)
     | ({
         relationTo: 'users';
         value: string | User;
@@ -387,12 +468,21 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'home';
         value: string | Home;
+      } | null)
+    | ({
+        relationTo: 'carts';
+        value: string | Cart;
       } | null);
   globalSlug?: string | null;
-  user: {
-    relationTo: 'users';
-    value: string | User;
-  };
+  user:
+    | {
+        relationTo: 'admins';
+        value: string | Admin;
+      }
+    | {
+        relationTo: 'users';
+        value: string | User;
+      };
   updatedAt: string;
   createdAt: string;
 }
@@ -402,10 +492,15 @@ export interface PayloadLockedDocument {
  */
 export interface PayloadPreference {
   id: string;
-  user: {
-    relationTo: 'users';
-    value: string | User;
-  };
+  user:
+    | {
+        relationTo: 'admins';
+        value: string | Admin;
+      }
+    | {
+        relationTo: 'users';
+        value: string | User;
+      };
   key?: string | null;
   value?:
     | {
@@ -429,6 +524,29 @@ export interface PayloadMigration {
   batch?: number | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "admins_select".
+ */
+export interface AdminsSelect<T extends boolean = true> {
+  name?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -615,6 +733,26 @@ export interface HomeSelect<T extends boolean = true> {
         image?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "carts_select".
+ */
+export interface CartsSelect<T extends boolean = true> {
+  user?: T;
+  farm?: T;
+  items?:
+    | T
+    | {
+        product?: T;
+        quantity?: T;
+        unit?: T;
+        priceSnapshot?: T;
+        id?: T;
+      };
+  status?: T;
   updatedAt?: T;
   createdAt?: T;
 }

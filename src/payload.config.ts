@@ -10,6 +10,7 @@ import { s3Storage } from '@payloadcms/storage-s3'
 import { nestedDocsPlugin } from '@payloadcms/plugin-nested-docs'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 
+import { Admins } from './collections/Admins'
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import brevoAdapter from './utils/brevoAdapter'
@@ -20,19 +21,20 @@ import { Home } from './collections/Home'
 import { HomeConfig } from './globals/HomeConfig'
 import { Products } from './collections/Products'
 import { Farms } from './collections/Farms'
+import { Carts } from './collections/Carts'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
   admin: {
-    user: Users.slug,
+    user: Admins.slug,
     importMap: {
       baseDir: path.resolve(dirname),
     },
   },
   globals: [Header, Footer, HomeConfig],
-  collections: [Users, Media, Pages, Products, Farms, Home],
+  collections: [Admins, Users, Media, Pages, Products, Farms, Home, Carts],
   editor: lexicalEditor({}),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
