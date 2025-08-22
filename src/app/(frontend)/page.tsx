@@ -107,7 +107,7 @@ export default async function HomePage() {
         <div className="flex flex-col xl:w-[calc(1280px*0.9)] 2xl:w-[calc(1536px*0.9)] md:flex-row w-full justify-between items-center gap-3 mt-6">
           {activeHome?.btImages?.map((farm) => {
             const farmImage = farm.image
-            const imageAlt = isMediaObject(farmImage) ? farmImage.alt : 'Farm image'
+            const imageAlt = isMediaObject(farmImage) ? farmImage.alt || 'Farm image' : 'Farm image'
             const imageUrl = isMediaObject(farmImage) ? farmImage.url : farmImage
 
             return (

@@ -11,7 +11,7 @@ interface Props {
   userName?: string | null
 }
 
-export function FarmerSection({ farm, userName }: Props) {
+export function FarmerSection({ farm, userName: _userName }: Props) {
   // Always start in overview, even if no farm exists yet
   const [mode, setMode] = useState<'overview' | 'form'>('overview')
 
