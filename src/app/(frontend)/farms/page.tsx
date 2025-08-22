@@ -20,7 +20,7 @@ export default async function FarmsIndexPage() {
   const farms = await payload.find({ collection: 'farms', draft: false, limit: 100 })
 
   return (
-    <div className="flex flex-col w-full text-black items-center justify-center my-4 px-4 xl:w-[calc(1280px*0.9)] 2xl:w-[calc(1536px*0.9)]">
+    <div className="flex flex-col w-full text-black items-center justify-center my-4 px-4 min-h-[calc(100vh-15.5rem)] xl:w-[calc(1280px*0.9)] 2xl:w-[calc(1536px*0.9)]">
       <h1 className="text-3xl font-bold mb-6">Our Farms</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
         {farms.docs.map((farm) => (

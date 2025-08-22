@@ -62,18 +62,7 @@ export default function NavbarCP({
     user: <TagUser className="text-danger" fill="currentColor" size={30} height={30} width={30} />,
   }
 
-  const menuItems: Array<{ label: string; link: string }> = [
-    { label: 'Profile', link: '/profile' },
-    { label: 'Dashboard', link: '/dashboard' },
-    { label: 'Activity', link: '/activity' },
-    { label: 'Analytics', link: '/analytics' },
-    { label: 'System', link: '/system' },
-    { label: 'Deployments', link: '/deployments' },
-    { label: 'My Settings', link: '/settings' },
-    { label: 'Team Settings', link: '/team-settings' },
-    { label: 'Help & Feedback', link: '/help' },
-    { label: 'Log Out', link: '/logout' },
-  ]
+  // Mobile menu should always reflect the navItems coming from the Header (admin configurable)
 
   return (
     <Navbar onMenuOpenChange={setIsMenuOpen} className="bg-[var(--carrot)]/90">
@@ -217,16 +206,9 @@ export default function NavbarCP({
         )}
       </NavbarContent>
       <NavbarMenu className="bg-[var(--carrot)]/90">
-        {menuItems.map((item, index) => (
-          <NavbarMenuItem key={`${item}-${index}`}>
-            <Link
-              className="w-full"
-              color={
-                index === 1 ? 'primary' : index === menuItems.length - 1 ? 'danger' : 'foreground'
-              }
-              href={item.link}
-              size="lg"
-            >
+        {navItems.map((item) => (
+          <NavbarMenuItem key={item.id}>
+            <Link className="w-full text-white" href={item.link} size="lg">
               {item.label}
             </Link>
           </NavbarMenuItem>

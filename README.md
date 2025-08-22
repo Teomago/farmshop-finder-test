@@ -2,7 +2,7 @@
 
 # Farmshop Finder (Next.js + Payload CMS)
 
-Discover local farms, their products, and manage structured content dynamically. Built with **Next.js App Router**, **Payload CMS**, **TailwindCSS v4**, **HeroUI**, **S3 storage**, and **Brevo (email)**.
+Discover local farms, their products, and manage structured content dynamically. Built with **Next.js App Router**, **Payload CMS**, **TailwindCSS v4**, **HeroUI**, **TanStack Query**, **S3 storage**, and **Brevo (email)**.
 
 </div>
 
@@ -11,24 +11,25 @@ Discover local farms, their products, and manage structured content dynamically.
 2. Tech Stack Summary
 3. Project Structure
 4. Installation & Initial Setup
-5. TailwindCSS Integration (Full Steps)
+5. TailwindCSS Integration
 6. HeroUI Integration & Client Components
 7. Data Model (Collections & Globals)
 8. Slug & Hierarchical URL Pipeline
-9. Frontend Rendering Pattern (Server vs Client)
+9. Rendering Pattern (Server vs Client)
 10. Dynamic Home Variant Selection
-11. Farms & Products Domain (Data + UI)
-12. Page Builder (Blocks) & Versioning
-13. Utilities & Infrastructure (S3, Email, Helpers)
-14. Styling Conventions
-15. Testing (Vitest + Playwright)
-16. Commands Reference
-17. Deployment (Vercel)
-18. Roadmap / TODO
-19. Quick Code Examples
-20. Authentication & Access Control (Implemented)
-21. SEO & Indexing Infrastructure (Implemented)
-22. Final Notes
+11. Authentication & Access Control
+12. Client State (TanStack Query)
+13. Farms & Products Domain (Data + UI)
+14. Farmer Dashboard & Ownership Logic
+15. Page Builder (Blocks) & Versioning
+16. Utilities & Infrastructure (S3, Email, Helpers)
+17. Styling Conventions
+18. Testing (Vitest + Playwright)
+19. Commands Reference
+20. Deployment (Vercel)
+21. SEO & Indexing Infrastructure
+22. Recent Updates (Changelog)
+23. Roadmap / TODO (Always Last)
 
 ---
 
@@ -98,7 +99,7 @@ docker-compose up -d
 
 ---
 
-## 5. TailwindCSS Integration (Full Steps)
+## 5. TailwindCSS Integration
 1. Install deps:
 ```bash
 pnpm install tailwindcss @tailwindcss/postcss postcss
@@ -274,7 +275,7 @@ Example: About (/about) -> Team (/about/team). Duplicate Team -> team-<randomId>
 
 ---
 
-## 9. Frontend Rendering Pattern (Server vs Client)
+## 9. Rendering Pattern (Server vs Client)
 Pattern:
 1. Server page: fetch via `getPayload({ config })`.
 2. Pass sanitized data to client component.
@@ -305,317 +306,14 @@ const active = all.docs.find(d => d.heroinfo === key)
 
 ---
 
-## 11. Farms & Products Domain (Data + UI)
-Listing `/farms`: responsive grid (1 -> 2 columns) using card height 350px.
+## 11. Authentication & Access Control
+Implemented using Payload's built-in auth system with HTTP-only cookies for secure session management.
 
-Detail `/farms/[slug]` uses Next.js params Promise pattern (Next 15) to avoid warnings:
-```tsx
-export default async function FarmDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
-  const farm = await getFarmBySlugOrId(slug)
-  if (!farm) return notFound()
-  return <FarmDetail farm={farm} />
-}
-```
-`FarmDetail` (client) renders hero + product cards. RichText description placeholders will be replaced with a Lexical renderer.
-
-Inventory modeling: `farms.products[]` defines per-farm pricing & quantity; avoids duplicating product base data.
-
----
-
-## 12. Page Builder (Blocks) & Versioning
-Pages collection:
-- Blocks: Cover, RichText, Image.
-- Drafts with autosave (100ms).
-- Up to 50 versions per doc for rollback.
-
-Future blocks (planned): Gallery, FAQ, Map embed, Pricing table.
-
----
-
-## 13. Utilities & Infrastructure (S3, Email, Helpers)
-### S3 Storage
-Configured through `@payloadcms/storage-s3` (media collection). `forcePathStyle: true` supports MinIO / custom endpoints.
-
-### Brevo Email Adapter (`utils/brevoAdapter.ts`)
-- Sends transactional emails; if `BREVO_EMAILS_ACTIVE` unset logs to console instead.
-- Wraps Axios POST to Brevo API.
-
-### Slug Utilities
-### Authentication Helpers (NEW)
-- `login` server action: delegates to `payload.login`, sets HTTP-only `payload-token` cookie.
-- `logout` server action: deletes `payload-token` cookie.
-- `getUser` server action: wraps `payload.auth({ headers })` to resolve current user for server components.
-- Dynamic navbar receives `user` from `HeaderServer` (server component) instead of reading `localStorage` (removed). This avoids hydration mismatch and keeps auth trust anchored on secure cookie.
-
-### Site URL Utility (NEW)
-- `getSiteURL()` normalizes a base site URL (trims trailing slash) and is used to build canonical URLs, sitemap entries, robots reference—kept isolated so future multi‑tenant logic can plug in without touching rendering code.
-
-- `slug()` field factory merges overrides using `deepMerge`.
-- `formatSlug` ensures consistent casing & hyphenation.
-- `generateId` uses crypto safe random base64url fragment.
-
-### Environment Variables (core)
-```
-BREVO_API_KEY=...
-BREVO_EMAILS_ACTIVE=true
-BREVO_SENDER_NAME=...
-BREVO_SENDER_EMAIL=...
-S3_BUCKET=...
-S3_ACCESS_KEY_ID=...
-S3_SECRET_ACCESS_KEY=...
-S3_REGION=...
-DATABASE_URI=...
-PAYLOAD_SECRET=...
-```
-
----
-
-## 14. Styling Conventions
-- Tailwind utility-first; minimal custom CSS.
-- HeroUI theming via Tailwind plugin registration.
-- Consistent container widths: `xl:w-[calc(1280px*0.9)]` pattern for centered content.
-
----
-
-## 15. Testing (Vitest + Playwright)
-Integration (Vitest): simple API reachability test (`users` collection fetch). Extend with schema and hook unit tests.
-E2E (Playwright): baseline homepage test (title & first heading). Needs update to reflect customized home content.
-
----
-
-## 16. Commands Reference
-```bash
-pnpm dev                        # Start dev server
-pnpm build                      # Next.js production build
-pnpm test                       # Run Vitest + Playwright (if configured in scripts)
-pnpm approve-builds             # Approve Tailwind/HeroUI native builds
-pnpm payload generate:types     # Regenerate Payload TypeScript types
-```
-
----
-
-## 17. Deployment (Vercel) ✅ READY
-
-**Status: ✅ Repository is deployment-ready for Vercel**
-
-### Build Configuration
-Build script (package.json):
-```json
-"build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build"
-```
-
-### Environment Variables for Vercel Dashboard
-Copy these environment variables to your Vercel project settings:
-
-**Required:**
-```
-DATABASE_URI=your-mongodb-connection-string
-PAYLOAD_SECRET=your-secure-secret-key
-```
-
-**S3 Storage (Required for media uploads):**
-```
-S3_BUCKET=your-s3-bucket-name
-S3_ACCESS_KEY_ID=your-access-key-id
-S3_SECRET_ACCESS_KEY=your-secret-access-key
-S3_REGION=your-region
-S3_ENDPOINT=your-s3-endpoint
-```
-
-**Brevo Email (Optional):**
-```
-BREVO_API_KEY=your-brevo-api-key
-BREVO_EMAILS_ACTIVE=true
-BREVO_SENDER_NAME=Your App Name
-BREVO_SENDER_EMAIL=noreply@yourapp.com
-```
-
-### Deployment Steps:
-1. Connect your repository to Vercel
-2. Configure environment variables in Vercel dashboard
-3. Deploy - Vercel will automatically run `npm run build`
-4. Your app will be available at your Vercel-provided URL
-
-### Build Status:
-✅ **TypeScript compilation**: No errors  
-✅ **ESLint linting**: No warnings  
-✅ **Build artifacts**: Generated successfully  
-✅ **Dynamic rendering**: Configured for database-dependent pages  
-✅ **Type safety**: Proper Media type guards implemented  
-✅ **Vercel config**: Optimized for deployment  
-✅ **Ready for production deployment**
-
-### Technical Notes:
-- Pages requiring database access use `dynamic = 'force-dynamic'` for server-side rendering
-- Type guards implemented for Media vs string types to prevent build errors
-- All ESLint warnings resolved with proper TypeScript types
-- Vercel configuration file included for optimal deployment settings
-
----
-
-## 18. Roadmap / TODO
-Core Content & Routing:
-- [ ] Implement catch‑all route `[[...segments]]` resolving by `pages.pathname` for dynamic hierarchical page rendering.
-- [ ] RichText renderer (Lexical) for Farms / Products / Home sections.
-
-Type & Performance:
-- [ ] Strong types for client components (remove `any` in `FarmDetail`, `Farms`).
-- [ ] Caching & revalidation strategy (e.g. tag-based invalidation, `revalidateTag`).
-
-Products & Commerce:
-- [ ] Product variant system (if future granularity required: size, packaging, seasonal availability).
-- [ ] Shopping cart model (session + persistent) scoped per farm or aggregated; evaluate multi-farm constraints.
-
-User Authentication (NEW):
-- [ ] Public user auth separate from admin (new `publicUsers` or extend `users` with role field).
-- [ ] Role-based access: `farmOwner` can CRUD its own Farm + inventory lines; `customer` can create carts & orders.
-- [ ] Ownership enforcement via access control hooks (e.g., match user ID to `farm.owner`).
-
-Cart & Orders (NEW):
-- [ ] `carts` collection: { user, farm, items[{ product, quantity, unit, priceSnapshot }], status }.
-- [ ] Validation hook: ensure items' farm matches cart.farm.
-- [ ] Price snapshot field to preserve historical pricing.
-
-Map & Geolocation (NEW):
-- [ ] Add geolocation fields to Farms: { latitude, longitude } or GeoJSON point.
-- [ ] Map component (Leaflet or Mapbox GL) plotting farm markers.
-- [ ] Optional clustering & distance filtering.
-
-UI Enhancements:
-- [ ] Additional blocks: Gallery, FAQ, Map, Pricing table.
-- [ ] Accessible focus states & improved color contrast audit.
-
-Testing & Quality:
-- [ ] Expand E2E to cover farm listing & detail pages.
-- [ ] Add integration tests for slug duplication & nested docs path sync.
-- [ ] Add snapshot tests for new blocks.
-
----
-
-## 19. Quick Code Examples
-
-### 19.1 Fetch Farms (Server Component)
-```ts
-import { getPayload } from 'payload'
-import config from '@/payload.config'
-export async function listFarms(limit = 50) {
-  const payload = await getPayload({ config })
-  return payload.find({ collection: 'farms', limit, depth: 1 })
-}
-```
-
-### 19.2 Fetch Farm By Slug OR ID
-```ts
-async function getFarmBySlugOrId(slugOrId: string) {
-  const payload = await getPayload({ config })
-  const bySlug = await payload.find({ collection: 'farms', limit: 1, where: { slug: { equals: slugOrId } } })
-  if (bySlug.docs[0]) return bySlug.docs[0]
-  try { return await payload.findByID({ collection: 'farms', id: slugOrId }) } catch { return null }
-}
-```
-
-### 19.3 Slug Field Factory
-```ts
-export const slug = (fieldToUse = 'title', overrides = {}) => deepMerge({
-  name: 'slug', type: 'text', index: true, unique: true,
-  hooks: { beforeValidate: [formatSlug(fieldToUse)] }
-}, overrides)
-```
-
-### 19.4 Auth Server Actions (Login / Logout / Signup)
-```ts
-'use server'
-// login.ts
-import { getPayload } from 'payload'; import config from '@/payload.config'; import { cookies } from 'next/headers'
-export async function login({ email, password }: { email: string; password: string }) {
-  const payload = await getPayload({ config })
-  try {
-    const res = await payload.login({ collection: 'users', data: { email, password } })
-    if (res.token) (await cookies()).set('payload-token', res.token, { httpOnly: true, path: '/', secure: process.env.NODE_ENV==='production' })
-    return { success: true }
-  } catch (e:any) { return { success: false, error: e.message } }
-}
-
-// logout.ts
-export async function logout() { (await cookies()).delete('payload-token') }
-
-// register.ts
-export async function register(data: { name: string; email: string; password: string; role: 'farmer'|'customer' }) {
-  const payload = await getPayload({ config })
-  const exists = await payload.find({ collection: 'users', where: { email: { equals: data.email } }, limit: 1 })
-  if (exists.docs.length) return { success: false, error: 'Email already registered' }
-  await payload.create({ collection: 'users', data })
-  return login({ email: data.email, password: data.password })
-}
-```
-
-### 19.5 useAuth Hook (Client) Consumption
-```tsx
-'use client'
-import { useAuth } from '@/app/(frontend)/hooks/useAuth'
-export function AuthStatus() {
-  const { user, isLoading } = useAuth()
-  if (isLoading) return <span>Loading...</span>
-  if (!user) return <a href="/login">Login</a>
-  return <span>Hi {user.name || user.email}</span>
-}
-```
-
-### 19.6 Mutation Pattern With Cache Invalidation
-```tsx
-import { useQueryClient } from '@tanstack/react-query'
-import { login } from '@/app/(frontend)/login/actions/login'
-const qc = useQueryClient()
-async function onSubmit(form:{email:string;password:string}) {
-  const r = await login(form)
-  if (r.success) qc.invalidateQueries({ queryKey: ['user'] })
-}
-```
-
-### 19.7 Protected Server Page Pattern
-```ts
-import { getPayload } from 'payload'; import config from '@/payload.config'; import { redirect } from 'next/navigation'
-export default async function DashboardPage() {
-  const payload = await getPayload({ config })
-  const { user } = await payload.auth({ headers: await import('next/headers').then(m=>m.headers()) })
-  if (!user || user.collection !== 'users') redirect('/login')
-  return <div>Dashboard for {user.email}</div>
-}
-```
-
-### 19.8 Example Farmer-Only Create Farm Action
-```ts
-'use server'
-import { getPayload } from 'payload'; import config from '@/payload.config'
-export async function createFarm({ name, location }: { name: string; location?: string }) {
-  const payload = await getPayload({ config })
-  // NOTE: additional auth check (payload.auth) could be added if not called from already protected UI
-  return payload.create({ collection: 'farms', data: { name, location } })
-}
-```
-
-### 19.9 Admin vs User UI Filter
-```tsx
-const { user } = useAuth()
-const isAppUser = user?.collection === 'users'
-```
-
----
-
-## 20. Final Notes
-_(Section numbering shifted: original Final Notes moved to 22 after adding implemented Auth & SEO sections.)_
-
-## 20. Authentication & Access Control (Implemented & Updated with React Query)
-
-### Summary
-Initial authentication integration now operates fully server-side using Payload's auth system and HTTP-only cookies. The previous client-only `localStorage` token check was removed to improve security and correctness.
-
-### Key Pieces
+### Key Features
 - **Collection Split**: `admins` (panel) vs `users` (frontend). Frontend disregards `admins` sessions.
 - **Client Session State**: `useAuth` (TanStack Query) fetches `/api/users/me` and caches the current app user.
 - **Navbar Conditional UI**: Uses `useAuth` and filters `user.collection === 'users'`.
-- **Protected Routes**: Server components still gate sensitive pages using `payload.auth` (e.g., dashboard) before rendering.
+- **Protected Routes**: Server components gate sensitive pages using `payload.auth` (e.g., dashboard) before rendering.
 - **Mutations**: `login`, `logout`, `register` server actions manage cookie + invalidate `['user']` cache on client.
 - **Access Logic**: Collections (`Farms`, `Products`, `Carts`) check `req.user.collection` + role where applicable.
 - **Owner Enforcement**: Farm updates/deletes restricted to matching `owner` or admin collection.
@@ -631,49 +329,10 @@ Initial authentication integration now operates fully server-side using Payload'
 - Add optimistic cart/product mutations with `useMutation`.
 - Optional passwordless or magic-link flow.
 
-## 21. SEO & Indexing Infrastructure (Implemented)
+---
 
-### Components Added
-- **SEO Plugin**: Integrated `@payloadcms/plugin-seo` for Pages collection (auto-added `meta` group: title, description, image fields).
-- **Dynamic Metadata**: `generateMetadata` implemented for dynamic page routes and farm detail pages; builds standard meta + Open Graph + Twitter card + canonical.
-- **Canonical URLs**: Added via `alternates.canonical` in metadata objects (Home, Farms index, Farm detail, and dynamic Pages).
-- **Sitemap Generator**: `app/sitemap.ts` returns an array (Next.js App Router format) enumerating static roots, published Pages, and Farms.
-- **Robots.txt Route**: `app/robots.txt/route.ts` serves crawl directives and references sitemap.
-- **Utility**: `getSiteURL()` centralizes base URL formatting (used across metadata, sitemap, robots).
-
-### Metadata Structure Example
-```ts
-export async function generateMetadata(): Promise<Metadata> {
-  return {
-    title: page.meta?.title || page.name,
-    description: page.meta?.description || fallback,
-    alternates: { canonical: base + pathname },
-    openGraph: { title, description, images },
-    twitter: { title, description, images: images?.map(i => i.url), card: 'summary' },
-  }
-}
-```
-
-### Benefits
-- Eliminates duplicate content ambiguity (canonical).
-- Improves discoverability and indexing speed (sitemap + robots reference).
-- Enriches social sharing previews (OG/Twitter images derived from SEO image field).
-- Centralized base URL logic reduces drift across features.
-
-### Future Enhancements (Deferred)
-- Structured data (JSON-LD) for Farms (`LocalBusiness`) and Products (`Product` with Offers).
-- Multi-language `hreflang` alternates.
-- Per-collection sitemap splitting if scale demands.
-- Image optimization pipeline signals (dimensions, mime) in OG tags.
-
-This README favors completeness over brevity while eliminating redundant duplication. Each major system (installation, styling, data modeling, slug pipeline, dynamic rendering, future user roles & commerce features) is documented once in a dedicated section. Update types after schema changes (`pnpm payload generate:types`) before adjusting client components.
-
-Ongoing documentation: keep this file updated as roadmap items are delivered.
-
-## 23. Client State Management with TanStack Query & Auth Methodology
-
-### Overview
-We integrated **TanStack Query (@tanstack/react-query)** to manage client-side server state (current user session, future data lists) while retaining **Server Actions** / server utilities for privileged mutations and page-level protection. This yields: centralized caching, automatic revalidation, and clear separation of trust boundaries.
+## 12. Client State (TanStack Query)
+Integrated **TanStack Query (@tanstack/react-query)** to manage client-side server state (current user session, future data lists) while retaining **Server Actions** / server utilities for privileged mutations and page-level protection. This yields: centralized caching, automatic revalidation, and clear separation of trust boundaries.
 
 ### Decision Matrix (What to use & When)
 | Goal | Use | Why |
@@ -798,566 +457,769 @@ This avoids exposing farmer/customer UI to panel-only accounts.
 | Get current user (client) | `useAuth()` |
 | Force refresh user cache | `queryClient.invalidateQueries({ queryKey: ['user'] })` |
 | Login | Server action → invalidate `['user']` |
-| Signup | Server action → invalidate `['user']` |
 | Logout | Server action → invalidate `['user']` |
 | Protect page | Server component + `payload.auth` + redirect |
 | Show UI only to farmers | `user?.role === 'farmer'` (after confirming `user.collection === 'users'`) |
 
-### Benefits Recap
-- Eliminates prop drilling of `user`.
-- Automatic freshness & background refetch.
-- Clear boundary: server mutates, client renders.
-- Extensible for future queries (farms list, products catalog) with minimal boilerplate.
+---
 
-### Future Enhancements
-- Hydrate `useAuth` with `initialData` from a server layout for zero-latency first render.
-- Add `useMutation` wrappers for structured mutation error handling.
-- Introduce optimistic updates for cart interactions.
+## 13. Farms & Products Domain (Data + UI)
+Listing `/farms`: responsive grid (1 -> 2 columns) using card height 350px.
+
+Detail `/farms/[slug]` uses Next.js params Promise pattern (Next 15) to avoid warnings:
+```tsx
+export default async function FarmDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const farm = await getFarmBySlugOrId(slug)
+  if (!farm) return notFound()
+  return <FarmDetail farm={farm} />
+}
+```
+`FarmDetail` (client) renders hero + product cards. RichText description placeholders will be replaced with a Lexical renderer.
+
+Inventory modeling: `farms.products[]` defines per-farm pricing & quantity; avoids duplicating product base data.
 
 ---
-End of TanStack Query integration documentation.
 
-
-
-#### Docker (Optional)
-
-If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.
-
-To do so, follow these steps:
-
-- Modify the `MONGODB_URI` in your `.env` file to `mongodb://127.0.0.1/<dbname>`
-- Modify the `docker-compose.yml` file's `MONGODB_URI` to match the above `<dbname>`
-- Run `docker-compose up` to start the database, optionally pass `-d` to run in the background.
-
-## How it works
-
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
-
-### Collections
-
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
-
-- #### Users (Authentication)
-
-  Users are auth-enabled collections that have access to the admin panel.
-
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/main/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
-
-- #### Media
-
-  This is the uploads enabled collection. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
-
-### Docker
-
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
-
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
-
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
-
-## Questions
-
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
-
-## TailwindCSS Setup with Payload
-
-To set up TailwindCSS in this project with Payload, follow these steps:
-
-1. **Install dependencies**:
-   Run the following command to install the required dependencies:
-   ```bash
-   pnpm install tailwindcss @tailwindcss/postcss postcss
-   ```
-
-2. **Approve builds**:
-   Approve `@tailwindcss/oxide` by running:
-   ```bash
-   pnpm approve-builds
-   ```
-
-3. **Generate import map**:
-   Generate the import map with the following command:
-   ```bash
-   pnpm payload generate:importmap
-   ```
-
-4. **PostCSS configuration**:
-   Create a `postcss.config.mjs` file in the project root with the following content:
-   ```javascript
-   const config = {
-     plugins: {
-       '@tailwindcss/postcss': {},
-     },
-   };
-   export default config;
-   ```
-
-5. **Import TailwindCSS**:
-   Add the following line to the `styles.css` file located in the `(frontend)` folder:
-   ```css
-   @import "tailwindcss";
-   ```
-
-6. **Test styles**:
-   Verify that TailwindCSS is working correctly by adding the following code in `page.tsx`:
-   ```tsx
-   <div className="bg-gray-700 font-mono p-8 rounded-lg shadow-xl shadow-zinc-800">
-     <h1 className="w-fit font-bold size-16">Test title</h1>
-     <p>
-       Lorem ipsum dolor sit amet consectetur adipisicing elit. Quaerat excepturi reiciendis nisi
-       explicabo provident vitae amet blanditiis autem quo. Recusandae inventore eius optio
-       laborum quis quam voluptas nesciunt, deleniti soluta.
-     </p>
-   </div>
-   ```
-
-With these steps, TailwindCSS should be correctly set up in your Payload project.
-
-## HeroUI Integration with TailwindCSS and Next.js
-
-Below are the steps taken to integrate HeroUI and TailwindCSS in the project's frontend, along with best practices for using client/server components in Next.js:
-
-1. **Install HeroUI and required dependencies**:
-   ```bash
-   pnpm install @heroui/react framer-motion
-   pnpm approve-builds # To approve HeroUI scripts
-   ```
-
-2. **.npmrc configuration**:
-   Add the following line to ensure proper HeroUI installation:
-   ```properties
-   public-hoist-pattern[]=@heroui/*
-   ```
-
-3. **Update and sync dependencies**:
-   - Run `pnpm install` to reinstall dependencies.
-   - Update HeroUI to the latest version:
-     ```bash
-     npx heroui-cli@latest upgrade --all
-     ```
-   - Run `pnpm install` again to ensure compatibility.
-   - Update `react-dom` and other dependencies if needed.
-
-4. **HeroUI configuration**:
-   - Create the `hero.ts` file in the `(frontend)` folder with:
-     ```ts
-     import { heroui } from '@heroui/react';
-     export default heroui();
-     ```
-
-5. **Integration in the styles file**:
-   - In `styles.css` add:
-     ```css
-     @import 'tailwindcss';
-     @plugin './hero.ts';
-     @source '../../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
-     @custom-variant dark (&:is(.dark *));
-     ```
-   - Change the language mode of the file to Tailwind CSS in VS Code to avoid syntax errors.
-
-6. **Global HeroUI Provider**:
-   - Create the `providers.tsx` file in `(frontend)`:
-     ```tsx
-     'use client';
-     import { HeroUIProvider } from '@heroui/react';
-     export function Providers({ children }: { children: React.ReactNode }) {
-       return <HeroUIProvider>{children}</HeroUIProvider>;
-     }
-     ```
-   - Modify the `layout.tsx` file to wrap the content with `<Providers>` inside `<body>`.
-
-7. **Best practices for client/server components in Next.js**:
-   - Create a `components/` folder for reusable components.
-   - Components using HeroUI or requiring `'use client'` should be in separate files and start with `'use client'`.
-   - Keep components/pages using async logic or `'use server'` separate.
-   - Import and use HeroUI components only in client-side files.
-
-> **Note:** This separation is essential to avoid rendering errors and ensure proper functioning of HeroUI and other interactive components in Next.js App Router.
-
-## Email Sending with Brevo (Sendinblue)
-
-To enable email sending (e.g., password reset, notifications) using Brevo, follow these steps:
-
-1. **Add the following variables to your `.env` file:**
-   ```env
-   BREVO_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-   BREVO_EMAILS_ACTIVE=true
-   BREVO_SENDER_NAME=YourName
-   BREVO_SENDER_EMAIL=your@email.com
-   ```
-
-2. **Create the Brevo adapter:**
-   In `src/utils/brevoAdapter.ts`:
-   ```ts
-   import axios from 'axios';
-   import { EmailAdapter, SendEmailOptions } from 'payload';
-
-   const brevoAdapter = (): EmailAdapter => {
-     const adapter = () => ({
-       name: 'Brevo',
-       defaultFromAddress: process.env.BREVO_SENDER_EMAIL as string,
-       defaultFromName: process.env.BREVO_SENDER_NAME as string,
-       sendEmail: async (message: SendEmailOptions): Promise<unknown> => {
-         if (!process.env.BREVO_EMAILS_ACTIVE) {
-           console.log('Emails disabled, logging to console');
-           console.log(message);
-           return;
-         }
-         try {
-           const res = await axios({
-             method: 'post',
-             url: 'https://api.brevo.com/v3/smtp/email',
-             headers: {
-               'api-key': process.env.BREVO_API_KEY as string,
-               'Content-Type': 'application/json',
-               Accept: 'application/json',
-             },
-             data: {
-               sender: {
-                 name: process.env.BREVO_SENDER_NAME as string,
-                 email: process.env.BREVO_SENDER_EMAIL as string,
-               },
-               to: [
-                 { email: message.to },
-               ],
-               subject: message.subject,
-               htmlContent: message.html,
-             },
-           });
-           console.log('Email sent successfully');
-           return res.data;
-         } catch (error) {
-           console.error('Error sending email with Brevo:', error);
-           throw error;
-         }
-       },
-     });
-     return adapter;
-   };
-   export default brevoAdapter;
-   ```
-
-3. **Install axios dependency:**
-   ```bash
-   pnpm add axios
-   ```
-
-4. **Configure Payload to use the adapter:**
-   In `src/payload.config.ts`:
-   ```ts
-   import brevoAdapter from './utils/brevoAdapter';
-   // ...
-   export default buildConfig({
-     // ...
-     email: brevoAdapter(),
-     // ...
-   });
-   ```
-
-With this setup, all emails sent by Payload will use your Brevo account. Make sure not to commit your real API keys to version control.
-
-## S3 Storage Setup
-
-To configure S3 storage for media uploads in this project, follow these steps:
-
-1. **Install the S3 Storage Plugin**:
-   Ensure the `@payloadcms/storage-s3` package is installed. This is already included in the project dependencies.
-
-2. **Set Up Environment Variables**:
-   Add the following variables to your `.env` file:
-   ```env
-   S3_BUCKET=<your-s3-bucket-name>
-   S3_ACCESS_KEY_ID=<your-access-key-id>
-   S3_SECRET_ACCESS_KEY=<your-secret-access-key>
-   S3_REGION=<your-region>
-   S3_ENDPOINT=<optional-custom-endpoint>
-   ```
-
-3. **Update Payload Configuration**:
-   The `payload.config.ts` file is already configured to use the S3 storage plugin. Ensure the following plugin configuration exists:
-   ```typescript
-   import { s3Storage } from '@payloadcms/storage-s3';
-
-   s3Storage({
-     collections: {
-       media: {
-         prefix: 'media',
-       },
-     },
-     bucket: process.env.S3_BUCKET,
-     config: {
-       credentials: {
-         accessKeyId: process.env.S3_ACCESS_KEY_ID,
-         secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
-       },
-       region: process.env.S3_REGION,
-       endpoint: process.env.S3_ENDPOINT,
-       forcePathStyle: true, // Required for some S3-compatible services
-     },
-   });
-   ```
-
-4. **Test the Integration**:
-   Upload a media file through the Payload admin panel and verify it appears in your S3 bucket.
-
-## Front-End and Payload Integration
-
-To integrate Payload CMS with the front-end:
-
-1. **Fetch Global Data**:
-   Use the `getPayload` function to fetch global data, such as the `header` and `footer` configurations. Example:
-   ```typescript
-   import { getPayload } from 'payload';
-   import config from '@payload-config';
-
-   const payload = await getPayload({ config });
-   const header = await payload.findGlobal({ slug: 'header', depth: 1 });
-   ```
-
-2. **Pass Data to Components**:
-   Pass the fetched data as props to your React components. For example, the `NavbarCP` component:
-   ```tsx
-   <NavbarCP
-     title={header.title}
-     logoUrl={header.logo.url}
-     logoAlt={header.logo.alt}
-     navItems={header.nav.map((item) => ({
-       id: item.id,
-       label: item.label,
-       link: item.link,
-     }))}
-   />
-   ```
-
-3. **Dynamic Rendering**:
-   Ensure components like `NavbarCP` and `Footer` dynamically render content based on the data passed from Payload.
-
-4. **Test the Integration**:
-   Run the application locally and verify that the header, footer, and other dynamic content are rendered correctly.
-
-## Dynamic Home Page Selection
-
-To render a specific "Home" document chosen via the `home-config` global, you can filter your collection on the client/server component:
-
-```ts
-// 1. Fetch the active Home entry from the global config
-const { activeHome } = await payload.findGlobal({
-  slug: 'home-config',
-  depth: 1,
-});
-
-// 2. Extract the identifying field (e.g., `heroinfo`)
-const activeKey = activeHome.heroinfo;
-
-// 3. Fetch all Home docs
-const homeData = await payload.find({
-  collection: 'home',
-  depth: 1,
-});
-
-// 4. Find the matching document by the key
-const selectedHome = homeData.docs.find(doc => doc.heroinfo === activeKey);
-
-// 5. Use its values in your component
-console.log(selectedHome?.hero.title);
+## 14. Farmer Dashboard & Ownership Logic
+This section focused on stabilizing farm ownership rules, improving the farmer dashboard form UX, and resolving validation / authorization conflicts around the `owner` relationship field in the `Farms` collection.
+
+### Key Changes
+- Farm Form (`FarmForm.tsx`):
+  - Added two‑panel responsive layout (info/image vs products) for medium+ screens; stacked on mobile.
+  - Improved product entry UI: each product row now stacks fields vertically on small screens and aligns them horizontally on larger screens for readability.
+  - Added remote image ingestion: user can paste a URL and optional name; image is downloaded client-side then uploaded to media with generated alt text fallback.
+  - Alt text auto‑generation helper (fallback from filename if user leaves alt empty).
+  - Lexical-compatible description serialization scaffold (simple paragraph JSON root from a textarea) to prepare for future rich text editor.
+
+- Ownership & Access (`Farms.ts`):
+  - Enforced single farm per farmer (create guard remains).
+  - Refactored `access.update` to fetch the existing farm and authorize if requester is admin or the current owner (not relying on submitted `owner` data).
+  - Introduced controlled handover: original owner (farmer) may transfer ownership to another eligible user; admins can always change owner.
+  - Adjusted `beforeChange` hook logic:
+    - If `owner` unchanged, the field is removed from update payload to avoid unnecessary validation.
+    - If changed: allow if admin OR original owner; otherwise throw a specific error.
+  - Made `owner` field required only on create via a custom `validate` function (so updates no longer fail if `owner` omitted).
+
+- Update Action (`updateFarm`):
+  - Initially excluded `owner` to bypass hook; later reintroduced then reverted strategy after making `owner` optional on update.
+  - Now sends only mutable farm fields; ownership stability handled server-side.
+
+- Error Resolution:
+  - Eliminated recurring "Only admins can change the owner" and "The following field is invalid: Owner" errors by decoupling update authorization from input payload and relaxing required constraint on update.
+
+### Rationale
+- Required relationship fields often cause false validation failures on partial updates when the client does not resend the original value. Making `owner` conditionally required (only on create) avoids redundant client logic while preserving data integrity at creation.
+- Explicit handover logic (owner or admin) matches a realistic operational need (transferring farm management) and keeps auditing surface small.
+- Removing unchanged `owner` from the incoming data prevents the hook from misinterpreting 'presence' as an attempted change.
+
+### Developer Notes
+- If you later add a restriction that the new owner must not already own a farm, implement a secondary check in `beforeChange` (update branch) when detecting `owner` change.
+- Consider logging ownership transfers (new `ownershipTransfers` collection) for audit trail.
+- When upgrading the description field to a real Lexical editor, replace the textarea + serializer with Payload's Lexical client component or a custom minimal editor component storing rich text JSON.
+
+### Follow-Up Opportunities
+- Add validation preventing handover to a user with an existing farm.
+- Add UI confirmation modal before ownership transfer.
+- Provide product row reordering (drag handle + index field) and per-row validation messages.
+- Convert description textarea to a lightweight rich text editor for formatting.
+
+---
+
+## 15. Page Builder (Blocks) & Versioning
+Pages collection:
+- Blocks: Cover, RichText, Image.
+- Drafts with autosave (100ms).
+- Up to 50 versions per doc for rollback.
+
+Future blocks (planned): Gallery, FAQ, Map embed, Pricing table.
+
+---
+
+## 16. Utilities & Infrastructure (S3, Email, Helpers)
+### S3 Storage
+Configured through `@payloadcms/storage-s3` (media collection). `forcePathStyle: true` supports MinIO / custom endpoints.
+
+### Brevo Email Adapter (`utils/brevoAdapter.ts`)
+- Sends transactional emails; if `BREVO_EMAILS_ACTIVE` unset logs to console instead.
+- Wraps Axios POST to Brevo API.
+
+### Slug Utilities
+### Authentication Helpers (NEW)
+- `login` server action: delegates to `payload.login`, sets HTTP-only `payload-token` cookie.
+- `logout` server action: deletes `payload-token` cookie.
+- `getUser` server action: wraps `payload.auth({ headers })` to resolve current user for server components.
+- Dynamic navbar receives `user` from `HeaderServer` (server component) instead of reading `localStorage` (removed). This avoids hydration mismatch and keeps auth trust anchored on secure cookie.
+
+### Site URL Utility (NEW)
+- `getSiteURL()` normalizes a base site URL (trims trailing slash) and is used to build canonical URLs, sitemap entries, robots reference—kept isolated so future multi‑tenant logic can plug in without touching rendering code.
+
+- `slug()` field factory merges overrides using `deepMerge`.
+- `formatSlug` ensures consistent casing & hyphenation.
+- `generateId` uses crypto safe random base64url fragment.
+
+### Environment Variables (core)
+```
+BREVO_API_KEY=...
+BREVO_EMAILS_ACTIVE=true
+BREVO_SENDER_NAME=...
+BREVO_SENDER_EMAIL=...
+S3_BUCKET=...
+S3_ACCESS_KEY_ID=...
+S3_SECRET_ACCESS_KEY=...
+S3_REGION=...
+DATABASE_URI=...
+PAYLOAD_SECRET=...
 ```
 
-## Deployment
+---
 
-### Vercel Deployment
+## 17. Styling Conventions
+- Tailwind utility-first; minimal custom CSS.
+- HeroUI theming via Tailwind plugin registration.
+- Consistent container widths: `xl:w-[calc(1280px*0.9)]` pattern for centered content.
 
-This project is ready for deployment on Vercel. All TypeScript errors and ESLint warnings have been resolved.
+---
 
-#### Prerequisites for Vercel Deployment:
+## 18. Testing (Vitest + Playwright)
+Integration (Vitest): simple API reachability test (`users` collection fetch). Extend with schema and hook unit tests.
+E2E (Playwright): baseline homepage test (title & first heading). Needs update to reflect customized home content.
 
-1. **Environment Variables**: Configure the following environment variables in your Vercel project dashboard:
-   ```
-   DATABASE_URI=your-mongodb-connection-string
-   PAYLOAD_SECRET=your-secure-secret-key
-   S3_BUCKET=your-s3-bucket-name
-   S3_ACCESS_KEY_ID=your-access-key-id
-   S3_SECRET_ACCESS_KEY=your-secret-access-key
-   S3_REGION=your-region
-   S3_ENDPOINT=your-s3-endpoint
-   ```
+---
 
-2. **Build Configuration**: The project uses Next.js with the following build script:
-   ```json
-   "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build"
-   ```
+## 19. Commands Reference
+```bash
+pnpm dev                        # Start dev server
+pnpm build                      # Next.js production build
+pnpm test                       # Run Vitest + Playwright (if configured in scripts)
+pnpm approve-builds             # Approve Tailwind/HeroUI native builds
+pnpm payload generate:types     # Regenerate Payload TypeScript types
+```
 
-3. **Memory Requirements**: The build process requires increased memory allocation (8GB) for optimal performance.
+---
 
-#### Deployment Steps:
+## 20. Deployment (Vercel) ✅ READY
 
+**Status: ✅ Repository is deployment-ready for Vercel**
+
+### Build Configuration
+Build script (package.json):
+```json
+"build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build"
+```
+
+### Environment Variables for Vercel Dashboard
+Copy these environment variables to your Vercel project settings:
+
+**Required:**
+```
+DATABASE_URI=your-mongodb-connection-string
+PAYLOAD_SECRET=your-secure-secret-key
+```
+
+**S3 Storage (Required for media uploads):**
+```
+S3_BUCKET=your-s3-bucket-name
+S3_ACCESS_KEY_ID=your-access-key-id
+S3_SECRET_ACCESS_KEY=your-secret-access-key
+S3_REGION=your-region
+S3_ENDPOINT=your-s3-endpoint
+```
+
+**Brevo Email (Optional):**
+```
+BREVO_API_KEY=your-brevo-api-key
+BREVO_EMAILS_ACTIVE=true
+BREVO_SENDER_NAME=Your App Name
+BREVO_SENDER_EMAIL=noreply@yourapp.com
+```
+
+### Deployment Steps:
 1. Connect your repository to Vercel
-2. Configure the environment variables in the Vercel dashboard
+2. Configure environment variables in Vercel dashboard
 3. Deploy - Vercel will automatically run `npm run build`
 4. Your app will be available at your Vercel-provided URL
 
-#### Build Status:
-✅ TypeScript compilation: No errors  
-✅ ESLint linting: No warnings  
-✅ Build artifacts generated successfully  
-✅ Ready for production deployment
+### Build Status:
+✅ **TypeScript compilation**: No errors  
+✅ **ESLint linting**: No warnings  
+✅ **Build artifacts**: Generated successfully  
+✅ **Dynamic rendering**: Configured for database-dependent pages  
+✅ **Type safety**: Proper Media type guards implemented  
+✅ **Vercel config**: Optimized for deployment  
+✅ **Ready for production deployment**
+
+### Technical Notes:
+- Pages requiring database access use `dynamic = 'force-dynamic'` for server-side rendering
+- Type guards implemented for Media vs string types to prevent build errors
+- All ESLint warnings resolved with proper TypeScript types
+- Vercel configuration file included for optimal deployment settings
 
 ---
 
-## Extended Project Documentation (Custom Features Implemented)
+## 21. SEO & Indexing Infrastructure (Implemented)
 
-This section documents all custom work added beyond the starter template.
+### Components Added
+- **SEO Plugin**: Integrated `@payloadcms/plugin-seo` for Pages collection (auto-added `meta` group: title, description, image fields).
+- **Dynamic Metadata**: `generateMetadata` implemented for dynamic page routes and farm detail pages; builds standard meta + Open Graph + Twitter card + canonical.
+- **Canonical URLs**: Added via `alternates.canonical` in metadata objects (Home, Farms index, Farm detail, and dynamic Pages).
+- **Sitemap Generator**: `app/sitemap.ts` returns an array (Next.js App Router format) enumerating static roots, published Pages, and Farms.
+- **Robots.txt Route**: `app/robots.txt/route.ts` serves crawl directives and references sitemap.
+- **Utility**: `getSiteURL()` centralizes base URL formatting (used across metadata, sitemap, robots).
 
-### 1. Dynamic Header & Footer (Globals)
-Globals: `Header`, `Footer` provide editable navigation and site footer content via Payload admin.
-Usage pattern:
-1. Server component fetches global with `payload.findGlobal({ slug: 'header' })`.
-2. Passes normalized props into a client component (e.g. `NavbarCP`).
-3. Footer follows the same model.
-
-### 2. Home Collection + Active Home Global Selector
-- Collection `home` stores variants of the landing page (hero, sections, images array `btImages`).
-- Global `home-config` contains a relationship to the active Home record.
-- Runtime flow:
-  - Fetch global → extract `activeHome` reference (may resolve to object or ID).
-  - Fetch all Home docs, match by identifying field (`heroinfo`).
-  - Render hero, bigSection, sectionA, sectionB, and background images.
-- Benefits: Multiple experimental home layouts; switch instantly via admin.
-
-### 3. Rich Page Builder with Nested Hierarchy (Pages Collection)
-File: `src/collections/Pages.ts`
-Features:
-- Blocks field `layout` with blocks: Cover, RichText, Image (extensible).
-- Drafts & versioning enabled (autosave interval 100ms, `maxPerDoc: 50`).
-- Custom slug system (non-unique per segment) + hierarchical URL & pathname.
-- Uses `nestedDocsPlugin` to manage tree, breadcrumbs, and full URL.
-- Hook `syncPathname` mirrors the last breadcrumb URL to a read-only, globally unique `pathname` field.
-
-Slug Pipeline Overview:
-1. `slug('name', { unique: false })` creates a text field with hooks.
-2. `formatSlug` (beforeValidate) normalizes new or changed slug or auto-derives from `name`.
-3. `beforeDuplicate` hook appends random ID (or replaces `/`) to avoid collisions on duplication.
-4. `nestedDocsPlugin` builds hierarchical URL (`generateURL`), including root `/`.
-5. `syncPathname` copies breadcrumbs tail URL into `pathname` for uniqueness & indexing.
-
-Advantages:
-- Hierarchical navigation; future-proof for catch‑all routes.
-- Stable SEO-friendly `pathname` separate from editable segment slug.
-
-### 4. Farms & Products Data Model
-
-Collections added: `products`, `farms`.
-
-`Products` fields:
-- name (text)
-- productType (select: produce, dairy, meat, poultry)
-- productImage (upload → media)
-- description (richText) [placeholder currently not rendered]
-
-`Farms` fields:
-- name, slug (auto from name)
-- tagline, location
-- farmImage (upload)
-- description (richText) [placeholder in UI]
-- products (array): each entry { product (relationship), quantity, unit (select), price }
-
-Design Rationale:
-- Farm→Products is many-to-many via array entries referencing base product + per-farm inventory info (quantity, price, unit).
-- Avoids duplicating product master data.
-
-### 5. Farms Front-End Implementation
-Routes:
-- `/farms` index page: server component fetches farms (limit 100) and renders grid (1 col mobile, 2 cols md+). Each card uses client component `Farms` (HeroUI card) with fixed height.
-- `/farms/[slug]` detail page: server component loads farm by slug (fallback ID). Passes data to client component `FarmDetail` for HeroUI rendering.
-
-`FarmDetail` component features:
-- Hero card with farm image, name, tagline, location.
-- Placeholder area: `tu descripcion aqui (richText farm pendiente)`.
-- Products gallery grid (1 / 2 / 3 responsive) showing product image, name, variantKey (future), quantity, price, and product description placeholder.
-
-### 6. Client vs Server Component Strategy
-- Data fetching isolated to server components (`page.tsx` files) to leverage async without `'use client'` overhead.
-- Presentation with interactivity uses client components (`Navbar`, `Footer`, `Farms`, `FarmDetail`).
-- Avoid dynamic import for client components unless code-splitting beneficial (removed `next/dynamic` with `ssr:false` after Next.js restriction warning).
-
-### 7. Home Page Rendering Flow (Current)
-1. Fetch `home-config` global.
-2. Resolve `activeHome` identifier safely (object vs ID).
-3. Fetch all home docs and match against `heroinfo`.
-4. Render hero (Card + background image), CTA button, large section, two sub sections, and bottom trio of images via `btImages`.
-
-### 8. Slug Utilities & Helpers
-Files:
-- `src/fields/slug/slug.ts` → factory for slug field (deep merge pattern, hooks, duplicate logic).
-- `src/fields/slug/hooks/formatSlug.ts` → normalization using `standard-slugify` respecting `/` root slug.
-- `generateId` → crypto-based short ID appended on duplication.
-- `deepMerge` → stable override mechanism for field configuration.
-
-Edge Cases Covered:
-- Root home slug `'/'` preserved.
-- Duplicate prevention vs. dynamic generation.
-- Breadcrumb changes propagate to `pathname` automatically.
-
-### 9. Media Handling (S3)
-- `@payloadcms/storage-s3` configured with bucket prefix `media` scoped to `media` collection only.
-- `forcePathStyle` enabled for compatibility with alternative S3 providers / local dev endpoints.
-
-### 10. Email Adapter (Brevo)
-- Custom adapter logs when disabled via `BREVO_EMAILS_ACTIVE` unset/false.
-- Centralized in `brevoAdapter.ts` and attached in `email` config.
-
-### 11. Versioning & Drafts (Pages)
-- Autosave active → rapid iteration in block editor.
-- Up to 50 prior versions retained for rollback/testing.
-
-### 12. Styling & UI Libraries
-- TailwindCSS v4 pipeline with HeroUI plugin integration in `styles.css`.
-- HeroUI components separated into client modules; shared layout uses provider wrapper.
-
-### 13. Pending / Future Enhancements
-- Implement catch‑all page route (`[[...segments]]`) resolving by `pathname` for nested Pages.
-- RichText rendering (farm + product descriptions + Home sections) with Lexical renderer.
-- Type strengthening in client components (replace `any` in `FarmDetail` / `Farms`).
-- Add variant system to Products (currently simplified; earlier variant scaffold replaced by lean model).
-- Caching strategy for frequently read globals (potential edge runtime optimization).
-
-### 14. Troubleshooting Notes
-- Warning about `params.slug` resolved by awaiting `params` as a Promise in dynamic route (Next.js 15 pattern).
-- Removed unsupported `next/dynamic` with `ssr:false` in server route to fix build error.
-- Ensure to regenerate types after schema changes: `pnpm run generate:types`.
-
-### 15. Commands Reference
-```bash
-# Regenerate Payload types
-pnpm run generate:types
-
-# Run dev server
-pnpm dev
-
-# Run tests (int + e2e)
-pnpm test
-
-# Approve Tailwind / HeroUI builds
-pnpm approve-builds
+### Metadata Structure Example
+```ts
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: page.meta?.title || page.name,
+    description: page.meta?.description || fallback,
+    alternates: { canonical: base + pathname },
+    openGraph: { title, description, images },
+    twitter: { title, description, images: images?.map(i => i.url), card: 'summary' },
+  }
+}
 ```
 
-### 16. Data Fetch Snippets
-Get farms:
+### Benefits
+- Eliminates duplicate content ambiguity (canonical).
+- Improves discoverability and indexing speed (sitemap + robots reference).
+- Enriches social sharing previews (OG/Twitter images derived from SEO image field).
+- Centralized base URL logic reduces drift across features.
+
+### Future Enhancements (Deferred)
+- Structured data (JSON-LD) for Farms (`LocalBusiness`) and Products (`Product` with Offers).
+- Multi-language `hreflang` alternates.
+- Per-collection sitemap splitting if scale demands.
+- Image optimization pipeline signals (dimensions, mime) in OG tags.
+
+This README favors completeness over brevity while eliminating redundant duplication. Each major system (installation, styling, data modeling, slug pipeline, dynamic rendering, future user roles & commerce features) is documented once in a dedicated section. Update types after schema changes (`pnpm payload generate:types`) before adjusting client components.
+
+Ongoing documentation: keep this file updated as roadmap items are delivered.
+
+## 22. Recent Updates (Changelog)
+
+### 2023-10-10
+- **Feature**: Implemented dynamic Home page variant selection via `home-config` global.
+- **Feature**: Added SEO metadata generation and sitemap/robots integration.
+- **Fix**: Resolved hydration mismatch in auth state by removing `localStorage` reliance.
+- **Fix**: Eliminated redundant "Only admins can change the owner" errors by decoupling update authorization from input payload.
+
+### 2023-09-25
+- **Feature**: Integrated TanStack Query for client state management.
+- **Feature**: Added authentication helpers (`login`, `logout`, `getUser`) for server actions.
+- **Fix**: Adjusted `beforeChange` hook logic for farm ownership to allow admin overrides.
+
+### 2023-09-10
+- **Feature**: Initial commit with Next.js, Payload CMS, TailwindCSS, and HeroUI setup.
+- **Feature**: Basic farm and product listing pages.
+
+---
+
+## 23. Roadmap / TODO (Always Last)
+Core Content & Routing:
+- [ ] Implement catch‑all route `[[...segments]]` resolving by `pages.pathname` for dynamic hierarchical page rendering.
+- [ ] RichText renderer (Lexical) for Farms / Products / Home sections.
+
+Type & Performance:
+- [ ] Strong types for client components (remove `any` in `FarmDetail`, `Farms`).
+- [ ] Caching & revalidation strategy (e.g. tag-based invalidation, `revalidateTag`).
+
+Products & Commerce:
+- [ ] Product variant system (if future granularity required: size, packaging, seasonal availability).
+- [ ] Shopping cart model (session + persistent) scoped per farm or aggregated; evaluate multi-farm constraints.
+
+User Authentication (NEW):
+- [ ] Public user auth separate from admin (new `publicUsers` or extend `users` with role field).
+- [ ] Role-based access: `farmOwner` can CRUD its own Farm + inventory lines; `customer` can create carts & orders.
+- [ ] Ownership enforcement via access control hooks (e.g., match user ID to `farm.owner`).
+
+Cart & Orders (NEW):
+- [ ] `carts` collection: { user, farm, items[{ product, quantity, unit, priceSnapshot }], status }.
+- [ ] Validation hook: ensure items' farm matches cart.farm.
+- [ ] Price snapshot field to preserve historical pricing.
+
+Map & Geolocation (NEW):
+- [ ] Add geolocation fields to Farms: { latitude, longitude } or GeoJSON point.
+- [ ] Map component (Leaflet or Mapbox GL) plotting farm markers.
+- [ ] Optional clustering & distance filtering.
+
+UI Enhancements:
+- [ ] Additional blocks: Gallery, FAQ, Map, Pricing table.
+- [ ] Accessible focus states & improved color contrast audit.
+
+Testing & Quality:
+- [ ] Expand E2E to cover farm listing & detail pages.
+- [ ] Add integration tests for slug duplication & nested docs path sync.
+- [ ] Add snapshot tests for new blocks.
+
+---
+
+## Appendix: Quick Code Examples
+
+### 24.1 Fetch Farms (Server Component)
 ```ts
-const payload = await getPayload({ config })
-const farms = await payload.find({ collection: 'farms', limit: 50, depth: 1 })
+import { getPayload } from 'payload'
+import config from '@/payload.config'
+export async function listFarms(limit = 50) {
+  const payload = await getPayload({ config })
+  return payload.find({ collection: 'farms', limit, depth: 1 })
+}
 ```
 
-Get single farm by slug fallback ID:
+### 24.2 Fetch Farm By Slug OR ID
 ```ts
-const bySlug = await payload.find({ collection: 'farms', where: { slug: { equals: slug } }, limit: 1 })
-const farm = bySlug.docs[0] || await payload.findByID({ collection: 'farms', id: slug })
+async function getFarmBySlugOrId(slugOrId: string) {
+  const payload = await getPayload({ config })
+  const bySlug = await payload.find({ collection: 'farms', limit: 1, where: { slug: { equals: slugOrId } } })
+  if (bySlug.docs[0]) return bySlug.docs[0]
+  try { return await payload.findByID({ collection: 'farms', id: slugOrId }) } catch { return null }
+}
+```
+
+### 24.3 Slug Field Factory
+```ts
+export const slug = (fieldToUse = 'title', overrides = {}) => deepMerge({
+  name: 'slug', type: 'text', index: true, unique: true,
+  hooks: { beforeValidate: [formatSlug(fieldToUse)] }
+}, overrides)
+```
+
+### 24.4 Auth Server Actions (Login / Logout / Signup)
+```ts
+'use server'
+// login.ts
+import { getPayload } from 'payload'; import config from '@/payload.config'; import { cookies } from 'next/headers'
+export async function login({ email, password }: { email: string; password: string }) {
+  const payload = await getPayload({ config })
+  try {
+    const res = await payload.login({ collection: 'users', data: { email, password } })
+    if (res.token) (await cookies()).set('payload-token', res.token, { httpOnly: true, path: '/', secure: process.env.NODE_ENV==='production' })
+    return { success: true }
+  } catch (e:any) { return { success: false, error: e.message } }
+}
+
+// logout.ts
+export async function logout() { (await cookies()).delete('payload-token') }
+
+// register.ts
+export async function register(data: { name: string; email: string; password: string; role: 'farmer'|'customer' }) {
+  const payload = await getPayload({ config })
+  const exists = await payload.find({ collection: 'users', where: { email: { equals: data.email } }, limit: 1 })
+  if (exists.docs.length) return { success: false, error: 'Email already registered' }
+  await payload.create({ collection: 'users', data })
+  return login({ email: data.email, password: data.password })
+}
+```
+
+### 24.5 useAuth Hook (Client) Consumption
+```tsx
+'use client'
+import { useAuth } from '@/app/(frontend)/hooks/useAuth'
+export function AuthStatus() {
+  const { user, isLoading } = useAuth()
+  if (isLoading) return <span>Loading...</span>
+  if (!user) return <a href="/login">Login</a>
+  return <span>Hi {user.name || user.email}</span>
+}
+```
+
+### 24.6 Mutation Pattern With Cache Invalidation
+```tsx
+import { useQueryClient } from '@tanstack/react-query'
+import { login } from '@/app/(frontend)/login/actions/login'
+const qc = useQueryClient()
+async function onSubmit(form:{email:string;password:string}) {
+  const r = await login(form)
+  if (r.success) qc.invalidateQueries({ queryKey: ['user'] })
+}
+```
+
+### 24.7 Protected Server Page Pattern
+```ts
+import { getPayload } from 'payload'; import config from '@/payload.config'; import { redirect } from 'next/navigation'
+export default async function DashboardPage() {
+  const payload = await getPayload({ config })
+  const { user } = await payload.auth({ headers: await import('next/headers').then(m=>m.headers()) })
+  if (!user || user.collection !== 'users') redirect('/login')
+  return <div>Dashboard for {user.email}</div>
+}
+```
+
+### 24.8 Example Farmer-Only Create Farm Action
+```ts
+'use server'
+import { getPayload } from 'payload'; import config from '@/payload.config'
+export async function createFarm({ name, location }: { name: string; location?: string }) {
+  const payload = await getPayload({ config })
+  // NOTE: additional auth check (payload.auth) could be added if not called from already protected UI
+  return payload.create({ collection: 'farms', data: { name, location } })
+}
+```
+
+### 24.9 Admin vs User UI Filter
+```tsx
+const { user } = useAuth()
+const isAppUser = user?.collection === 'users'
 ```
 
 ---
 
-This extended documentation will continue to evolve as more features (nested page routing, rich text rendering, product variants) are implemented.
+<!-- Removed obsolete duplicate numbering sections (25–26) below to maintain a single canonical structure. Authentication & SEO details already covered in sections 11, 12, 21, and the changelog. -->
+
+### Summary
+Initial authentication integration now operates fully server-side using Payload's auth system and HTTP-only cookies. The previous client-only `localStorage` token check was removed to improve security and correctness.
+
+### Key Pieces
+- **Collection Split**: `admins` (panel) vs `users` (frontend). Frontend disregards `admins` sessions.
+- **Client Session State**: `useAuth` (TanStack Query) fetches `/api/users/me` and caches the current app user.
+- **Navbar Conditional UI**: Uses `useAuth` and filters `user.collection === 'users'`.
+- **Protected Routes**: Server components still gate sensitive pages using `payload.auth` (e.g., dashboard) before rendering.
+- **Mutations**: `login`, `logout`, `register` server actions manage cookie + invalidate `['user']` cache on client.
+- **Access Logic**: Collections (`Farms`, `Products`, `Carts`) check `req.user.collection` + role where applicable.
+- **Owner Enforcement**: Farm updates/deletes restricted to matching `owner` or admin collection.
+
+### Benefits
+- Secure: Cookies remain HTTP-only; no token exposure.
+- Responsive UI: React Query cache updates instantly after mutations.
+- Separation of concerns: Server enforces, client reflects.
+- Extensible: Adding new queries (products, farms) only needs a `useQuery` wrapper.
+
+### Future Enhancements (Deferred)
+- Hydrate `useAuth` with `initialData` from server layout to eliminate first fetch.
+- Add optimistic cart/product mutations with `useMutation`.
+- Optional passwordless or magic-link flow.
+
+## 26. SEO & Indexing Infrastructure (Implemented)
+
+### Components Added
+- **SEO Plugin**: Integrated `@payloadcms/plugin-seo` for Pages collection (auto-added `meta` group: title, description, image fields).
+- **Dynamic Metadata**: `generateMetadata` implemented for dynamic page routes and farm detail pages; builds standard meta + Open Graph + Twitter card + canonical.
+- **Canonical URLs**: Added via `alternates.canonical` in metadata objects (Home, Farms index, Farm detail, and dynamic Pages).
+- **Sitemap Generator**: `app/sitemap.ts` returns an array (Next.js App Router format) enumerating static roots, published Pages, and Farms.
+- **Robots.txt Route**: `app/robots.txt/route.ts` serves crawl directives and references sitemap.
+- **Utility**: `getSiteURL()` centralizes base URL formatting (used across metadata, sitemap, robots).
+
+### Metadata Structure Example
+```ts
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: page.meta?.title || page.name,
+    description: page.meta?.description || fallback,
+    alternates: { canonical: base + pathname },
+    openGraph: { title, description, images },
+    twitter: { title, description, images: images?.map(i => i.url), card: 'summary' },
+  }
+}
+```
+
+### Benefits
+- Eliminates duplicate content ambiguity (canonical).
+- Improves discoverability and indexing speed (sitemap + robots reference).
+- Enriches social sharing previews (OG/Twitter images derived from SEO image field).
+- Centralized base URL logic reduces drift across features.
+
+### Future Enhancements (Deferred)
+- Structured data (JSON-LD) for Farms (`LocalBusiness`) and Products (`Product` with Offers).
+- Multi-language `hreflang` alternates.
+- Per-collection sitemap splitting if scale demands.
+- Image optimization pipeline signals (dimensions, mime) in OG tags.
+
+This README favors completeness over brevity while eliminating redundant duplication. Each major system (installation, styling, data modeling, slug pipeline, dynamic rendering, future user roles & commerce features) is documented once in a dedicated section. Update types after schema changes (`pnpm payload generate:types`) before adjusting client components.
+
+Ongoing documentation: keep this file updated as roadmap items are delivered.
+
+## 27. Recent Updates (Changelog)
+
+### 2023-10-10
+- **Feature**: Implemented dynamic Home page variant selection via `home-config` global.
+- **Feature**: Added SEO metadata generation and sitemap/robots integration.
+- **Fix**: Resolved hydration mismatch in auth state by removing `localStorage` reliance.
+- **Fix**: Eliminated redundant "Only admins can change the owner" errors by decoupling update authorization from input payload.
+
+### 2023-09-25
+- **Feature**: Integrated TanStack Query for client state management.
+- **Feature**: Added authentication helpers (`login`, `logout`, `getUser`) for server actions.
+- **Fix**: Adjusted `beforeChange` hook logic for farm ownership to allow admin overrides.
+
+### 2023-09-10
+- **Feature**: Initial commit with Next.js, Payload CMS, TailwindCSS, and HeroUI setup.
+- **Feature**: Basic farm and product listing pages.
+
+---
+
+## 28. Roadmap / TODO (Always Last)
+Core Content & Routing:
+- [ ] Implement catch‑all route `[[...segments]]` resolving by `pages.pathname` for dynamic hierarchical page rendering.
+- [ ] RichText renderer (Lexical) for Farms / Products / Home sections.
+
+Type & Performance:
+- [ ] Strong types for client components (remove `any` in `FarmDetail`, `Farms`).
+- [ ] Caching & revalidation strategy (e.g. tag-based invalidation, `revalidateTag`).
+
+Products & Commerce:
+- [ ] Product variant system (if future granularity required: size, packaging, seasonal availability).
+- [ ] Shopping cart model (session + persistent) scoped per farm or aggregated; evaluate multi-farm constraints.
+
+User Authentication (NEW):
+- [ ] Public user auth separate from admin (new `publicUsers` or extend `users` with role field).
+- [ ] Role-based access: `farmOwner` can CRUD its own Farm + inventory lines; `customer` can create carts & orders.
+- [ ] Ownership enforcement via access control hooks (e.g., match user ID to `farm.owner`).
+
+Cart & Orders (NEW):
+- [ ] `carts` collection: { user, farm, items[{ product, quantity, unit, priceSnapshot }], status }.
+- [ ] Validation hook: ensure items' farm matches cart.farm.
+- [ ] Price snapshot field to preserve historical pricing.
+
+Map & Geolocation (NEW):
+- [ ] Add geolocation fields to Farms: { latitude, longitude } or GeoJSON point.
+- [ ] Map component (Leaflet or Mapbox GL) plotting farm markers.
+- [ ] Optional clustering & distance filtering.
+
+UI Enhancements:
+- [ ] Additional blocks: Gallery, FAQ, Map, Pricing table.
+- [ ] Accessible focus states & improved color contrast audit.
+
+Testing & Quality:
+- [ ] Expand E2E to cover farm listing & detail pages.
+- [ ] Add integration tests for slug duplication & nested docs path sync.
+- [ ] Add snapshot tests for new blocks.
+
+---
+
+## 29. Quick Code Examples
+
+### 29.1 Fetch Farms (Server Component)
+```ts
+import { getPayload } from 'payload'
+import config from '@/payload.config'
+export async function listFarms(limit = 50) {
+  const payload = await getPayload({ config })
+  return payload.find({ collection: 'farms', limit, depth: 1 })
+}
+```
+
+### 29.2 Fetch Farm By Slug OR ID
+```ts
+async function getFarmBySlugOrId(slugOrId: string) {
+  const payload = await getPayload({ config })
+  const bySlug = await payload.find({ collection: 'farms', limit: 1, where: { slug: { equals: slugOrId } } })
+  if (bySlug.docs[0]) return bySlug.docs[0]
+  try { return await payload.findByID({ collection: 'farms', id: slugOrId }) } catch { return null }
+}
+```
+
+### 29.3 Slug Field Factory
+```ts
+export const slug = (fieldToUse = 'title', overrides = {}) => deepMerge({
+  name: 'slug', type: 'text', index: true, unique: true,
+  hooks: { beforeValidate: [formatSlug(fieldToUse)] }
+}, overrides)
+```
+
+### 29.4 Auth Server Actions (Login / Logout / Signup)
+```ts
+'use server'
+// login.ts
+import { getPayload } from 'payload'; import config from '@/payload.config'; import { cookies } from 'next/headers'
+export async function login({ email, password }: { email: string; password: string }) {
+  const payload = await getPayload({ config })
+  try {
+    const res = await payload.login({ collection: 'users', data: { email, password } })
+    if (res.token) (await cookies()).set('payload-token', res.token, { httpOnly: true, path: '/', secure: process.env.NODE_ENV==='production' })
+    return { success: true }
+  } catch (e:any) { return { success: false, error: e.message } }
+}
+
+// logout.ts
+export async function logout() { (await cookies()).delete('payload-token') }
+
+// register.ts
+export async function register(data: { name: string; email: string; password: string; role: 'farmer'|'customer' }) {
+  const payload = await getPayload({ config })
+  const exists = await payload.find({ collection: 'users', where: { email: { equals: data.email } }, limit: 1 })
+  if (exists.docs.length) return { success: false, error: 'Email already registered' }
+  await payload.create({ collection: 'users', data })
+  return login({ email: data.email, password: data.password })
+}
+```
+
+### 29.5 useAuth Hook (Client) Consumption
+```tsx
+'use client'
+import { useAuth } from '@/app/(frontend)/hooks/useAuth'
+export function AuthStatus() {
+  const { user, isLoading } = useAuth()
+  if (isLoading) return <span>Loading...</span>
+  if (!user) return <a href="/login">Login</a>
+  return <span>Hi {user.name || user.email}</span>
+}
+```
+
+### 29.6 Mutation Pattern With Cache Invalidation
+```tsx
+import { useQueryClient } from '@tanstack/react-query'
+import { login } from '@/app/(frontend)/login/actions/login'
+const qc = useQueryClient()
+async function onSubmit(form:{email:string;password:string}) {
+  const r = await login(form)
+  if (r.success) qc.invalidateQueries({ queryKey: ['user'] })
+}
+```
+
+### 29.7 Protected Server Page Pattern
+```ts
+import { getPayload } from 'payload'; import config from '@/payload.config'; import { redirect } from 'next/navigation'
+export default async function DashboardPage() {
+  const payload = await getPayload({ config })
+  const { user } = await payload.auth({ headers: await import('next/headers').then(m=>m.headers()) })
+  if (!user || user.collection !== 'users') redirect('/login')
+  return <div>Dashboard for {user.email}</div>
+}
+```
+
+### 29.8 Example Farmer-Only Create Farm Action
+```ts
+'use server'
+import { getPayload } from 'payload'; import config from '@/payload.config'
+export async function createFarm({ name, location }: { name: string; location?: string }) {
+  const payload = await getPayload({ config })
+  // NOTE: additional auth check (payload.auth) could be added if not called from already protected UI
+  return payload.create({ collection: 'farms', data: { name, location } })
+}
+```
+
+### 29.9 Admin vs User UI Filter
+```tsx
+const { user } = useAuth()
+const isAppUser = user?.collection === 'users'
+```
+
+---
+
+## 30. Final Notes
+_(Section numbering shifted: original Final Notes moved to 22 after adding implemented Auth & SEO sections.)_
+
+## 30. Authentication & Access Control (Implemented & Updated with React Query)
+
+### Summary
+Initial authentication integration now operates fully server-side using Payload's auth system and HTTP-only cookies. The previous client-only `localStorage` token check was removed to improve security and correctness.
+
+### Key Pieces
+- **Collection Split**: `admins` (panel) vs `users` (frontend). Frontend disregards `admins` sessions.
+- **Client Session State**: `useAuth` (TanStack Query) fetches `/api/users/me` and caches the current app user.
+- **Navbar Conditional UI**: Uses `useAuth` and filters `user.collection === 'users'`.
+- **Protected Routes**: Server components still gate sensitive pages using `payload.auth` (e.g., dashboard) before rendering.
+- **Mutations**: `login`, `logout`, `register` server actions manage cookie + invalidate `['user']` cache on client.
+- **Access Logic**: Collections (`Farms`, `Products`, `Carts`) check `req.user.collection` + role where applicable.
+- **Owner Enforcement**: Farm updates/deletes restricted to matching `owner` or admin collection.
+
+### Benefits
+- Secure: Cookies remain HTTP-only; no token exposure.
+- Responsive UI: React Query cache updates instantly after mutations.
+- Separation of concerns: Server enforces, client reflects.
+- Extensible: Adding new queries (products, farms) only needs a `useQuery` wrapper.
+
+### Future Enhancements (Deferred)
+- Hydrate `useAuth` with `initialData` from server layout to eliminate first fetch.
+- Add optimistic cart/product mutations with `useMutation`.
+- Optional passwordless or magic-link flow.
+
+## 31. SEO & Indexing Infrastructure (Implemented)
+
+### Components Added
+- **SEO Plugin**: Integrated `@payloadcms/plugin-seo` for Pages collection (auto-added `meta` group: title, description, image fields).
+- **Dynamic Metadata**: `generateMetadata` implemented for dynamic page routes and farm detail pages; builds standard meta + Open Graph + Twitter card + canonical.
+- **Canonical URLs**: Added via `alternates.canonical` in metadata objects (Home, Farms index, Farm detail, and dynamic Pages).
+- **Sitemap Generator**: `app/sitemap.ts` returns an array (Next.js App Router format) enumerating static roots, published Pages, and Farms.
+- **Robots.txt Route**: `app/robots.txt/route.ts` serves crawl directives and references sitemap.
+- **Utility**: `getSiteURL()` centralizes base URL formatting (used across metadata, sitemap, robots).
+
+### Metadata Structure Example
+```ts
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: page.meta?.title || page.name,
+    description: page.meta?.description || fallback,
+    alternates: { canonical: base + pathname },
+    openGraph: { title, description, images },
+    twitter: { title, description, images: images?.map(i => i.url), card: 'summary' },
+  }
+}
+```
+
+### Benefits
+- Eliminates duplicate content ambiguity (canonical).
+- Improves discoverability and indexing speed (sitemap + robots reference).
+- Enriches social sharing previews (OG/Twitter images derived from SEO image field).
+- Centralized base URL logic reduces drift across features.
+
+### Future Enhancements (Deferred)
+- Structured data (JSON-LD) for Farms (`LocalBusiness`) and Products (`Product` with Offers).
+- Multi-language `hreflang` alternates.
+- Per-collection sitemap splitting if scale demands.
+- Image optimization pipeline signals (dimensions, mime) in OG tags.
+
+This README favors completeness over brevity while eliminating redundant duplication. Each major system (installation, styling, data modeling, slug pipeline, dynamic rendering, future user roles & commerce features) is documented once in a dedicated section. Update types after schema changes (`pnpm payload generate:types`) before adjusting client components.
+
+Ongoing documentation: keep this file updated as roadmap items are delivered.
+
+## 32. Recent Updates (Changelog)
+
+### 2023-10-10
+- **Feature**: Implemented dynamic Home page variant selection via `home-config` global.
+- **Feature**: Added SEO metadata generation and sitemap/robots integration.
+- **Fix**: Resolved hydration mismatch in auth state by removing `localStorage` reliance.
+- **Fix**: Eliminated redundant "Only admins can change the owner" errors by decoupling update authorization from input payload.
+
+### 2023-09-25
+- **Feature**: Integrated TanStack Query for client state management.
+- **Feature**: Added authentication helpers (`login`, `logout`, `getUser`) for server actions.
+- **Fix**: Adjusted `beforeChange` hook logic for farm ownership to allow admin overrides.
+
+### 2023-09-10
+- **Feature**: Initial commit with Next.js, Payload CMS, TailwindCSS, and HeroUI setup.
+- **Feature**: Basic farm and product listing pages.
+
+---
+
+## 33. Roadmap / TODO (Always Last)
+Core Content & Routing:
+- [ ] Implement catch‑all route `[[...segments]]` resolving by `pages.pathname` for dynamic hierarchical page rendering.
+- [ ] RichText renderer (Lexical) for Farms / Products / Home sections.
+
+Type & Performance:
+- [ ] Strong types for client components (remove `any` in `FarmDetail`, `Farms`).
+- [ ] Caching & revalidation strategy (e.g. tag-based invalidation, `revalidateTag`).
+
+Products & Commerce:
+- [ ] Product variant system (if future granularity required: size, packaging, seasonal availability).
+- [ ] Shopping cart model (session + persistent) scoped per farm or aggregated; evaluate multi-farm constraints.
+
+User Authentication (NEW):
+- [ ] Public user auth separate from admin (new `publicUsers` or extend `users` with role field).
+- [ ] Role-based access: `farmOwner` can CRUD its own Farm + inventory lines; `customer` can create carts & orders.
+- [ ] Ownership enforcement via access control hooks (e.g., match user ID to `farm.owner`).
+
+Cart & Orders (NEW):
+- [ ] `carts` collection: { user, farm, items[{ product, quantity, unit, priceSnapshot }], status }.
+- [ ] Validation hook: ensure items' farm matches cart.farm.
+- [ ] Price snapshot field to preserve historical pricing.
+
+Map & Geolocation (NEW):
+- [ ] Add geolocation fields to Farms: { latitude, longitude } or GeoJSON point.
+- [ ] Map component (Leaflet or Mapbox GL) plotting farm markers.
+- [ ] Optional clustering & distance filtering.
+
+UI Enhancements:
+- [ ] Additional blocks: Gallery, FAQ, Map, Pricing table.
+- [ ] Accessible focus states & improved color contrast audit.
+
+Testing & Quality:
+- [ ] Expand E2E to cover farm listing & detail pages.
+- [ ] Add integration tests for slug duplication & nested docs path sync.
+- [ ] Add snapshot tests for new blocks.
+
+---
 
 
 

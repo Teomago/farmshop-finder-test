@@ -55,3 +55,9 @@ h3,
 p {
   @apply text-white;
 }
+
+.farmForm {
+  label {
+    @apply text-[var(--carrot)] font-semibold;
+  }
+}

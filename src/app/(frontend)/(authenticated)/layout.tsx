@@ -14,24 +14,13 @@ const Layout: FC<LayoutProps> = async ({ children }) => {
     return null
   }
 
-  // Example: Conditional rendering based on user role
-  //   if (user.role === 'farmer') {
-  //     return (
-  //       <div className="farmer-layout">
-  //         <h1>Farmer Dashboard</h1>
-  //         {children}
-  //       </div>
-  //     )
-  //   } else if (user.role === 'customer') {
-  //     return (
-  //       <div className="customer-layout">
-  //         <h1>Customer Dashboard</h1>
-  //         {children}
-  //       </div>
-  //     )
-  //   }
-
-  return <>{children}</>
+  return (
+    <>
+      <div className="flex flex-col w-full min-h-[calc(100vh-15.5rem)] justify-center items-center">
+        {children}
+      </div>
+    </>
+  )
 }
 
 export default Layout

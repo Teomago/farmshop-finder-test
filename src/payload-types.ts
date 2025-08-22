@@ -217,7 +217,7 @@ export interface User {
  */
 export interface Media {
   id: string;
-  alt: string;
+  alt?: string | null;
   prefix?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -372,7 +372,7 @@ export interface Farm {
   /**
    * The user who owns this farm.
    */
-  owner: string | User;
+  owner?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
 }
