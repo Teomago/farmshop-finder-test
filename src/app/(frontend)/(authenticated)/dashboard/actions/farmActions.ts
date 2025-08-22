@@ -67,6 +67,7 @@ export async function updateFarm(id: string, data: FarmInput) {
   const existing = await payload.findByID({ collection: 'farms', id })
   if (!existing) throw new Error('Farm not found')
   const existingOwner = (existing as Farm).owner
+  if (!existingOwner) throw new Error('Farm has no owner')
   const ownerId = typeof existingOwner === 'object' ? existingOwner.id : existingOwner
   if (ownerId !== user.id) throw new Error('Forbidden')
   // Build update object including existing owner (required field)
