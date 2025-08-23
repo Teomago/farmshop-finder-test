@@ -142,13 +142,28 @@ export const Farms: CollectionConfig = {
           relationTo: 'products',
           required: true,
         },
+        // NEW: stock = number of sellable bundles / lots available (how many units you can sell)
         {
-          name: 'quantity',
-          label: 'Quantity',
+          name: 'stock',
+          label: 'Stock (Bundles)',
           type: 'number',
           min: 0,
           required: true,
           defaultValue: 0,
+          admin: {
+            description: 'Number of bundles / lots available to sell (e.g. 2 bundles of 5kg each).',
+          },
+        },
+        {
+          name: 'quantity',
+          label: 'Quantity per Bundle',
+          type: 'number',
+          min: 0,
+          required: true,
+          defaultValue: 0,
+          admin: {
+            description: 'Size of each bundle in the selected unit (e.g. 5 kg per bundle).',
+          },
         },
         {
           name: 'unit',

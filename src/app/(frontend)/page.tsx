@@ -73,7 +73,7 @@ export default async function HomePage() {
                   : ''
               }
             />
-            <CardFooter className="absolute bg-white/30 bottom-0 border-t-1 border-zinc-100/50 z-10 justify-between">
+            <CardFooter className="absolute flex flex-col bg-white/30 bottom-0 border-t-1 border-zinc-100/50 z-10 justify-between w-full">
               <div>
                 <p className="text-black text-tiny">{activeHome?.hero.subtitle}</p>
               </div>

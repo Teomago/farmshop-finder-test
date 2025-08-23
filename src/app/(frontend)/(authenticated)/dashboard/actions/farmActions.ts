@@ -8,7 +8,8 @@ import type { Farm } from '@/payload-types'
 
 type ProductEntryInput = {
   product: string
-  quantity: number
+  stock: number
+  quantity: number // quantity per bundle
   unit: 'kg' | 'pcs' | 'liters' | 'boxes'
   price: number
 }
@@ -49,7 +50,14 @@ export async function createFarm(data: FarmInput) {
     tagline: data.tagline ?? null,
     location: data.location ?? null,
     description: data.description ?? null,
-    products: data.products?.map((p) => ({ ...p })) ?? null,
+    products:
+      data.products?.map((p) => ({
+        product: p.product,
+        stock: p.stock,
+        quantity: p.quantity,
+        unit: p.unit,
+        price: p.price,
+      })) ?? null,
     owner: user.id as string,
   }
   const created = await payload.create({ collection: 'farms', data: createData })
@@ -80,7 +88,14 @@ export async function updateFarm(id: string, data: FarmInput) {
       data.farmImage ??
       (typeof existing.farmImage === 'object' ? existing.farmImage.id : existing.farmImage) ??
       '',
-    products: data.products?.map((p) => ({ ...p })) ?? null,
+    products:
+      data.products?.map((p) => ({
+        product: p.product,
+        stock: p.stock,
+        quantity: p.quantity,
+        unit: p.unit,
+        price: p.price,
+      })) ?? null,
     owner: ownerId as string,
   }
   const updated = await payload.update({ collection: 'farms', id, data: updateData })

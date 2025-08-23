@@ -363,6 +363,13 @@ export interface Farm {
   products?:
     | {
         product: string | Product;
+        /**
+         * Number of bundles / lots available to sell (e.g. 2 bundles of 5kg each).
+         */
+        stock: number;
+        /**
+         * Size of each bundle in the selected unit (e.g. 5 kg per bundle).
+         */
         quantity: number;
         unit: 'kg' | 'pcs' | 'liters' | 'boxes';
         price: number;
@@ -681,6 +688,7 @@ export interface FarmsSelect<T extends boolean = true> {
     | T
     | {
         product?: T;
+        stock?: T;
         quantity?: T;
         unit?: T;
         price?: T;

@@ -1,14 +1,20 @@
 'use client'
 
 import React from 'react'
-import { Card, CardFooter } from '@heroui/card'
+import { Card, CardBody, CardFooter, CardHeader } from '@heroui/card'
 import { Image as HeroUiImage } from '@heroui/image'
-import { Farm, Media } from '@/payload-types'
+import { Farm, Media, Product } from '@/payload-types'
 import { isExpanded } from '@/utils/isExpanded'
 import { RichText } from '@/module/richText'
+import { useAuth } from '../hooks/useAuth'
+import { Button } from '@heroui/button'
+import { useAddToCart } from '../cart/hooks/useCarts'
 
 export default function FarmDetail({ farm }: { farm: Farm | null }) {
+  const { user } = useAuth()
+  const { mutate: add, isPending } = useAddToCart()
   if (!farm) return null
+  const isCustomer = !!(user && user.collection === 'users' && user.role === 'customer')
 
   return (
     <>
@@ -55,31 +61,54 @@ export default function FarmDetail({ farm }: { farm: Farm | null }) {
           <h2 className="text-xl font-semibold text-black my-4">Available products</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {farm.products.map((p) => {
-              const prod = typeof p.product === 'object' && p.product ? p.product : null
+              const prod = typeof p.product === 'object' ? (p.product as Product) : null
               const image = prod && typeof prod.productImage === 'object' ? prod.productImage : null
               return (
-                <Card key={p.id} className="w-full h-auto overflow-hidden flex flex-col shadow-lg">
-                  <div className="w-full bg-gray-200 relative overflow-hidden">
-                    {image && (
-                      <HeroUiImage
-                        removeWrapper
-                        radius="none"
-                        alt={image.alt || ''}
-                        className="z-0 w-full h-[350px] object-cover"
-                        src={image.url || ''}
-                      />
-                    )}
-                  </div>
-                  <CardFooter className="absolute flex h-[274px] flex-col bg-white/30 bottom-0 border-t-1 border-zinc-100/50 z-10 justify-between w-full">
+                <Card
+                  key={p.id}
+                  className="w-full h-[calc(800px*0.85)] sm:h-[475px] md:h-[475px] overflow-hidden flex flex-col shadow-lg"
+                >
+                  <CardHeader className="absolute z-10 top-1 flex-col items-start">
+                    <div>
+                      {isCustomer && (
+                        <Button
+                          size="sm"
+                          radius="sm"
+                          isDisabled={isPending || (p.stock ?? 0) <= 0}
+                          className="mt-2 bg-[var(--carrot)] text-white"
+                          onPress={() => {
+                            if (!prod) return
+                            add({
+                              farmId: farm.id,
+                              productId: typeof p.product === 'string' ? p.product : prod.id,
+                            })
+                          }}
+                        >
+                          {isPending ? 'Adding...' : 'Add'}
+                        </Button>
+                      )}
+                    </div>
+                    {/* Product description placeholder (richText pending) */}
+                    <div className="farmDetailRichText">
+                      <RichText data={prod?.description} />
+                    </div>
+                  </CardHeader>
+                  {image && (
+                    <HeroUiImage
+                      removeWrapper
+                      radius="none"
+                      alt={image.alt || ''}
+                      className="z-0 w-full h-full scale-125 -translate-y-6 object-cover"
+                      src={image.url || ''}
+                    />
+                  )}
+                  <CardFooter className="absolute flex flex-col bg-white/30 bottom-0 border-t-1 border-zinc-100/50 z-10 justify-between w-full">
                     <div className="flex justify-between gap-4">
                       <div className="font-bold text-2xl">{prod ? prod.name : 'Product'}</div>
                       <div className="font-bold text-2xl">€{p.price?.toFixed?.(2) ?? '0.00'}</div>
                     </div>
-                    <div className="text-xl opacity-80">Qty: {p.quantity}</div>
-                    {/* Product description placeholder (richText pending) */}
-                    <div className="mt-auto farmDetailRichText">
-                      <RichText data={prod?.description} />
-                    </div>
+                    <div className="text-xl opacity-80">Quantity: {p.quantity}</div>
+                    <div className="text-xl opacity-80">Stock: {p.stock}</div>
                   </CardFooter>
                 </Card>
               )

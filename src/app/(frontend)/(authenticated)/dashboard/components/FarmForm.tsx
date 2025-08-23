@@ -11,7 +11,8 @@ import { Select, SelectItem } from '@heroui/select'
 
 type ProductEntry = {
   product: string
-  quantity: number
+  stock: number // number of bundles/lots available
+  quantity: number // quantity per bundle (size)
   unit: 'kg' | 'pcs' | 'liters' | 'boxes'
   price: number
   _key?: string
@@ -28,12 +29,22 @@ export function FarmForm({ farm, onDone }: Props) {
   const [location, setLocation] = useState(farm?.location || '')
   const [description, setDescription] = useState<string>('')
   const [products, setProducts] = useState<ProductEntry[]>(
-    farm?.products?.map((p) => ({
-      product: typeof p.product === 'string' ? p.product : p.product.id,
-      quantity: p.quantity,
-      unit: p.unit,
-      price: p.price,
-    })) || [],
+    farm?.products?.map((p) => {
+      const prod = p as unknown as {
+        product: string | { id: string }
+        stock?: number
+        quantity: number
+        unit: ProductEntry['unit']
+        price: number
+      }
+      return {
+        product: typeof prod.product === 'string' ? prod.product : prod.product.id,
+        stock: typeof prod.stock === 'number' ? prod.stock : 0,
+        quantity: prod.quantity,
+        unit: prod.unit,
+        price: prod.price,
+      }
+    }) || [],
   )
   const [allProducts, setAllProducts] = useState<Product[]>([])
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -121,7 +132,7 @@ export function FarmForm({ farm, onDone }: Props) {
   function addProductRow() {
     setProducts((p) => [
       ...p,
-      { product: '', quantity: 0, unit: 'kg', price: 0, _key: crypto.randomUUID() },
+      { product: '', stock: 0, quantity: 0, unit: 'kg', price: 0, _key: crypto.randomUUID() },
     ])
   }
 
@@ -303,11 +314,21 @@ export function FarmForm({ farm, onDone }: Props) {
                 ))}
               </Select>
 
-              {/* Línea 2: cantidad, unidad, precio */}
+              {/* Línea 2: stock, cantidad por bundle, unidad, precio */}
               <div className="flex flex-col sm:flex-row gap-3">
                 <Input
                   type="number"
-                  label="Cant."
+                  label="Stock"
+                  labelPlacement="outside"
+                  value={String(row.stock)}
+                  min={0}
+                  onChange={(e) => updateProductRow(i, { stock: Number(e.target.value) })}
+                  className="flex-1"
+                  color="warning"
+                />
+                <Input
+                  type="number"
+                  label="Cant. x Bundle"
                   labelPlacement="outside"
                   value={String(row.quantity)}
                   min={0}
@@ -360,7 +381,7 @@ export function FarmForm({ farm, onDone }: Props) {
                   type="button"
                   onPress={() => removeProductRow(i)}
                 >
-                  Eliminar
+                  Eliminate
                 </Button>
               </div>
             </div>
@@ -375,9 +396,9 @@ export function FarmForm({ farm, onDone }: Props) {
           isDisabled={submitting}
           className="bg-[var(--carrot)]/85"
         >
-          {submitting ? 'Guardando...' : farm ? 'Actualizar Finca' : 'Crear Finca'}
+          {submitting ? 'Saving...' : farm ? 'Update Farm' : 'Create Farm'}
         </Button>
-        {status && <p className="text-sm">Estado: {status}</p>}
+        {status && <p className="text-sm text-warning">Status: {status}</p>}
       </div>
     </Form>
   )

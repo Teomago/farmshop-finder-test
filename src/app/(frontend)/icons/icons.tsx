@@ -23,7 +23,13 @@ export const AcmeLogo = () => {
   )
 }
 
-export const ChevronDown = ({ fill = 'currentColor', size, height, width, ...props }: IconProps) => {
+export const ChevronDown = ({
+  fill = 'currentColor',
+  size,
+  height,
+  width,
+  ...props
+}: IconProps) => {
   return (
     <svg
       fill="none"
@@ -216,3 +222,24 @@ export const Scale = ({ fill = 'currentColor', size, height, width, ...props }: 
     </svg>
   )
 }
+
+export const CartIcon = ({ fill = 'currentColor', size, height, width, ...props }: IconProps) => (
+  <svg
+    fill="none"
+    height={size || height || 24}
+    viewBox="0 0 24 24"
+    width={size || width || 24}
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M3 3h2l1.6 9.2A2 2 0 0 0 8.57 14h7.86a2 2 0 0 0 1.97-1.8L20 6H6"
+      stroke={fill}
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <circle cx="10" cy="19" r="1.5" stroke={fill} strokeWidth={1.5} />
+    <circle cx="16" cy="19" r="1.5" stroke={fill} strokeWidth={1.5} />
+  </svg>
+)

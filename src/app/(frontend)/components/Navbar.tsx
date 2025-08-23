@@ -19,8 +19,17 @@ import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
 import { logout } from '../login/actions/logout'
-
-import { ChevronDown, Scale, Lock, Activity, Flash, Server, TagUser } from '../icons/icons'
+import {
+  ChevronDown,
+  Scale,
+  Lock,
+  Activity,
+  Flash,
+  Server,
+  TagUser,
+  CartIcon,
+} from '../icons/icons'
+import { useAllCarts, useCartTotals, useDecrementItem, useClearCarts } from '../cart/hooks/useCarts'
 
 export default function NavbarCP({
   title,
@@ -38,6 +47,10 @@ export default function NavbarCP({
   const queryClient = useQueryClient()
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
+  const { carts } = useAllCarts()
+  const { total, itemCount } = useCartTotals()
+  const { mutate: decItem, isPending: decPending } = useDecrementItem()
+  const { mutate: clearCarts, isPending: clearPending } = useClearCarts()
 
   const handleLogout = () => {
     startTransition(async () => {
@@ -147,6 +160,108 @@ export default function NavbarCP({
       </NavbarContent>
 
       <NavbarContent justify="end">
+        {user && user.collection === 'users' && user.role === 'customer' ? (
+          <Dropdown placement="bottom-end" className="bg-[var(--carrot)]/95 min-w-[320px]">
+            <DropdownTrigger>
+              <Button
+                variant="light"
+                className="relative overflow-visible text-white pr-6 bg-[var(--barn)]/85 shadow-2xl"
+                startContent={<CartIcon className="text-white" />}
+              >
+                Cart
+                {itemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 translate-x-1/3 -translate-y-1/3 bg-red-600 text-white text-[10px] px-1 rounded-full shadow-md pointer-events-none">
+                    {itemCount}
+                  </span>
+                )}
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu aria-label="Cart" className="max-h-[400px] overflow-y-auto">
+              {carts.length === 0 ? (
+                <DropdownItem key="empty" className="opacity-70 text-sm">
+                  Your cart is empty
+                </DropdownItem>
+              ) : (
+                [
+                  ...carts.flatMap((cart) => {
+                    return [
+                      <DropdownItem
+                        key={cart.id + '-header'}
+                        textValue={cart.farmName}
+                        className="py-1 bg-white/5"
+                      >
+                        <div className="flex justify-between text-xs font-semibold">
+                          <span>{cart.farmName}</span>
+                          <span>€{cart.total.toFixed(2)}</span>
+                        </div>
+                      </DropdownItem>,
+                      ...cart.lines.map((line) => (
+                        <DropdownItem key={`${cart.id}-${line.id}`} className="py-1">
+                          <div className="flex justify-between items-center gap-2 text-xs">
+                            <div className="flex flex-col">
+                              <span>
+                                {line.productName}
+                                {line.bundles > 1 && (
+                                  <span className="ml-1 opacity-70 font-mono">x{line.bundles}</span>
+                                )}
+                              </span>
+                              {line.bundleSize > 0 && (
+                                <span className="opacity-60">
+                                  ({line.bundleSize} {line.unit})
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-mono">
+                                €{(line.priceEach * line.bundles).toFixed(2)}
+                              </span>
+                              <button
+                                type="button"
+                                disabled={decPending}
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  decItem({
+                                    cartId: cart.id,
+                                    productId: line.productId,
+                                    amount: 1,
+                                  })
+                                }}
+                                className="w-5 h-5 flex items-center justify-center rounded-full bg-red-600 text-white text-[10px] disabled:opacity-50"
+                              >
+                                -
+                              </button>
+                            </div>
+                          </div>
+                        </DropdownItem>
+                      )),
+                    ]
+                  }),
+                  <DropdownItem key="grand-total" className="bg-white/10 mt-1">
+                    <div className="flex justify-between text-sm font-semibold">
+                      <span>Grand Total</span>
+                      <span>€{total.toFixed(2)}</span>
+                    </div>
+                  </DropdownItem>,
+                  <DropdownItem key="clear-all" className="pt-1">
+                    <div className="flex">
+                      <button
+                        type="button"
+                        className="w-full bg-red-700 hover:bg-red-600 text-white text-xs py-1 rounded disabled:opacity-50"
+                        disabled={clearPending}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          clearCarts()
+                        }}
+                      >
+                        {clearPending ? 'Clearing...' : 'Clear All'}
+                      </button>
+                    </div>
+                  </DropdownItem>,
+                ]
+              )}
+            </DropdownMenu>
+          </Dropdown>
+        ) : null}
         {user && user.collection === 'users' ? (
           <Dropdown placement="bottom-end" className="bg-[var(--carrot)]/90">
             <DropdownTrigger>
