@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Card, CardBody, CardFooter, CardHeader } from '@heroui/card'
+import { Card, CardFooter, CardHeader } from '@heroui/card'
 import { Image as HeroUiImage } from '@heroui/image'
 import { Farm, Media, Product } from '@/payload-types'
 import { isExpanded } from '@/utils/isExpanded'
@@ -9,6 +9,7 @@ import { RichText } from '@/module/richText'
 import { useAuth } from '../hooks/useAuth'
 import { Button } from '@heroui/button'
 import { useAddToCart } from '../cart/hooks/useCarts'
+import { AddSquare } from '../icons/icons'
 
 export default function FarmDetail({ farm }: { farm: Farm | null }) {
   const { user } = useAuth()
@@ -57,7 +58,7 @@ export default function FarmDetail({ farm }: { farm: Farm | null }) {
 
       {/* Products grid */}
       {Array.isArray(farm.products) && farm.products.length > 0 && (
-        <section className="flex flex-col xl:flex-row w-full h-full xl:w-[calc(1280px*0.9)] 2xl:w-[calc(1536px*0.9)] mt-10 space-y-4">
+        <section className="flex flex-col xl:flex-row w-full h-full xl:w-[calc(1280px*0.9)] 2xl:w-[calc(1536px*0.9)] mt-10 space-y-4 gap-2">
           <h2 className="text-xl font-semibold text-black my-4">Available products</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {farm.products.map((p) => {
@@ -66,26 +67,42 @@ export default function FarmDetail({ farm }: { farm: Farm | null }) {
               return (
                 <Card
                   key={p.id}
-                  className="w-full h-[calc(800px*0.85)] sm:h-[475px] md:h-[475px] overflow-hidden flex flex-col shadow-lg"
+                  className="w-full h-auto min-h-[calc(600px*0.85)] sm:min-h-[475px] md:min-h-[475px] overflow-hidden flex flex-col shadow-lg"
                 >
                   <CardHeader className="absolute z-10 top-1 flex-col items-start">
                     <div>
                       {isCustomer && (
-                        <Button
-                          size="sm"
-                          radius="sm"
-                          isDisabled={isPending || (p.stock ?? 0) <= 0}
-                          className="mt-2 bg-[var(--carrot)] text-white"
-                          onPress={() => {
-                            if (!prod) return
-                            add({
-                              farmId: farm.id,
-                              productId: typeof p.product === 'string' ? p.product : prod.id,
-                            })
-                          }}
-                        >
-                          {isPending ? 'Adding...' : 'Add'}
-                        </Button>
+                        <div className="flex items-end gap-2 mt-2">
+                          <span className="text-xl font-bold text-[var(--carrot)] px-2 py-0.5">
+                            Add to cart
+                          </span>
+                          <Button
+                            size="sm"
+                            isIconOnly
+                            radius="sm"
+                            isDisabled={isPending || (p.stock ?? 0) <= 0}
+                            // className="bg-[var(--carrot)] text-white w-auto px-auto"
+                            className={
+                              isPending
+                                ? 'bg-[var(--carrot)] text-white w-auto px-2'
+                                : 'bg-[var(--carrot)] text-white w-auto'
+                            }
+                            onPress={() => {
+                              if (!prod) return
+                              add({
+                                farmId: farm.id,
+                                productId: typeof p.product === 'string' ? p.product : prod.id,
+                              })
+                            }}
+                            aria-label="Add to cart"
+                          >
+                            {isPending ? (
+                              'Adding...'
+                            ) : (
+                              <AddSquare className="text-white" size={20} />
+                            )}
+                          </Button>
+                        </div>
                       )}
                     </div>
                     {/* Product description placeholder (richText pending) */}
