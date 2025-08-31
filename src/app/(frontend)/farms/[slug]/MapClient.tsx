@@ -24,10 +24,7 @@ export function MapClient({ name, locationText, lat, lng, zoom }: MapClientProps
           <MapMarker
             longitude={lng!}
             latitude={lat!}
-            onClick={(e) => {
-              e.originalEvent?.stopPropagation?.()
-              setOpen(true)
-            }}
+            onClick={() => setOpen(true)}
           />
           {open && (
             <MapPopup longitude={lng!} latitude={lat!} onClose={() => setOpen(false)}>
