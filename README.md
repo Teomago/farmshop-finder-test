@@ -279,6 +279,105 @@ NEXT_PUBLIC_SITE_URL=
 SITE_URL=
 ```
 
+## 18a. Mapping Implementation (2025-08-31)
+
+Implemented Mapbox integration for farms (cluster + single-farm views):
+
+Core Files:
+- `app/(frontend)/MapBox/Map.tsx`: Controlled `MapView` (interactive pan/zoom, navigation + scale controls).
+- `app/(frontend)/MapBox/MapBase.tsx`: Simple wrapper for single-farm map (default world fallback); avoided inside clustered map to prevent nested maps.
+- `app/(frontend)/MapBox/FarmsMap.tsx`: Clustered multi-farm map (GeoJSON `Source` + `Layer` definitions; click to expand cluster or open popup).
+- `app/(frontend)/MapBox/MapPopup.tsx`: Reusable popup (Mapbox GL `Popup`).
+- `app/(frontend)/MapBox/types.ts`: `FarmLocation` type used to pass lean data from server page.
+- `app/(frontend)/farms/FarmsMapSection.tsx`: Client-only dynamic wrapper (`ssr:false`) around cluster map.
+- `app/(frontend)/farms/[slug]/MapClient.tsx`: Single farm marker + popup toggle.
+
+Implemented Features (summary of 19 changes): clustering, popup on click (mobile-friendly), selected marker highlight, fitBounds & initial center, cluster expansion, escape to close, pointer cursor over interactive layers, removal of nested map causing popup issues, interactive single-farm map controls.
+
+Deferred Enhancements: list↔map hover sync, filters (distance/products), user geolocation button, style/theming switch, search/geocoding, accessibility focus ring, React Query hydration for live updates.
+
+### 18a.1 Usage Examples
+
+#### a) Server Page → Cluster Map
+```tsx
+// app/(frontend)/farms/page.tsx (excerpt)
+import FarmsMapSection from './FarmsMapSection'
+import type { FarmLocation } from '../MapBox/types'
+
+const payload = await getPayload({ config })
+const farms = await payload.find({ collection: 'farms', draft: false, limit: 100 })
+const farmLocations: FarmLocation[] = farms.docs
+  .filter(f => f.geo?.lat && f.geo?.lng)
+  .map(f => ({
+    id: String(f.id),
+    slug: f.slug ?? String(f.id),
+    name: f.name || 'Unnamed Farm',
+    lat: f.geo!.lat!,
+    lng: f.geo!.lng!,
+    locationText: f.location || ''
+  }))
+return <FarmsMapSection farmLocations={farmLocations} />
+```
+
+#### b) Client Wrapper (Dynamic Import)
+```tsx
+// app/(frontend)/farms/FarmsMapSection.tsx (simplified)
+const FarmsMap = dynamic(() => import('../MapBox/FarmsMap').then(m => m.FarmsMap), { ssr: false })
+export default function FarmsMapSection({ farmLocations }: { farmLocations: FarmLocation[] }) {
+  return <div className="h-[420px]">{farmLocations.length ? <FarmsMap farms={farmLocations} /> : 'No farms'}</div>
+}
+```
+
+#### c) Cluster Map Prop Customization
+```tsx
+<FarmsMap
+  farms={farmLocations}
+  clusterColor="#16a34a"
+  clusterTextColor="#ffffff"
+  markerColor="#f59e0b"
+  onSelectFarm={(farm) => console.log('Selected', farm.id)}
+  showDetailLink
+/>
+```
+
+#### d) Single Farm Map
+```tsx
+'use client'
+import { MapClient } from '../../MapBox/MapClient'
+
+export function FarmMap({ name, locationText, lat, lng }: { name: string; locationText?: string; lat: number; lng: number }) {
+  return <MapClient name={name} locationText={locationText} lat={lat} lng={lng} zoom={12} />
+}
+```
+
+#### e) Custom Action on Selection
+```tsx
+<FarmsMap
+  farms={farmLocations}
+  onSelectFarm={(farm) => {
+    const el = document.querySelector(`[data-farm-card="${farm.id}"]`)
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }}
+/>
+```
+
+#### f) Environment Variable
+```
+NEXT_PUBLIC_MAPBOX_API_KEY=your_mapbox_token
+```
+
+#### g) Troubleshooting
+- Popup no aparece → asegúrate de que no hay `Map` anidado y que se hace click después de expandir cluster.
+- Cursor sin pointer → verifica `interactiveLayerIds` y listeners de `mouseenter/leave`.
+- Centro incorrecto → confirma que `lat`/`lng` son números antes de construir `FarmLocation`.
+
+#### h) Minimal Type
+```ts
+export interface FarmLocation { id: string; slug: string; name: string; lat: number; lng: number; locationText?: string }
+```
+
+These examples cubren los casos básicos y puntos de extensión.
+
 ## 18. Roadmap (Active – no dated changelog maintained)
 Content & Routing:
 - [ ] Catch‑all route `[[...segments]]` resolving dynamic pages by stored `pathname`.
@@ -287,7 +386,7 @@ Content & Routing:
 Domain & Commerce:
 - [ ] Product variants / seasonal availability.
 - [ ] Complete cart checkout flow & order collection.
-- [ ] Farm geolocation fields + map (Leaflet / Mapbox) with clustering.
+- [x] Farm geolocation fields + interactive Mapbox maps (clusters + popups). (Next: filters, geolocation, theming.)
 
 Auth & Access:
 - [ ] Prefetch/hydrate `useAuth` from server layout to eliminate initial client request.
@@ -311,7 +410,7 @@ Testing:
 
 ---
 
-Updated: 2025-08-23 (summary refresh; no per-change dates tracked).
+Updated: 2025-08-31 (mapping implemented; roadmap entry updated).
 
 If you modify schemas, run `pnpm generate:types` before using new fields in TypeScript.
 

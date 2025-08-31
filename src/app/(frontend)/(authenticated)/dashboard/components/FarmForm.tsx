@@ -56,6 +56,10 @@ export function FarmForm({ farm, onDone }: Props) {
   )
   const [status, setStatus] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  // Geo fields (editable only when farm exists)
+  const [geoLat, setGeoLat] = useState<number | ''>(farm?.geo?.lat ?? '')
+  const [geoLng, setGeoLng] = useState<number | ''>(farm?.geo?.lng ?? '')
+  const [geoZoom, setGeoZoom] = useState<number | ''>(farm?.geo?.zoom ?? 10)
 
   useEffect(() => {
     async function fetchProducts() {
@@ -174,6 +178,14 @@ export function FarmForm({ farm, onDone }: Props) {
           farmImage: farmImageId,
           description: descriptionValue,
           products: productEntries,
+          geo:
+            geoLat !== '' && geoLng !== ''
+              ? {
+                  lat: Number(geoLat),
+                  lng: Number(geoLng),
+                  zoom: geoZoom === '' ? 10 : Number(geoZoom),
+                }
+              : undefined,
         })
         setStatus('updated')
       } else {
@@ -184,6 +196,14 @@ export function FarmForm({ farm, onDone }: Props) {
           farmImage: farmImageId,
           description: descriptionValue,
           products: productEntries,
+          geo:
+            geoLat !== '' && geoLng !== ''
+              ? {
+                  lat: Number(geoLat),
+                  lng: Number(geoLng),
+                  zoom: geoZoom === '' ? 10 : Number(geoZoom),
+                }
+              : undefined,
         })
         setStatus('created')
       }
@@ -231,6 +251,40 @@ export function FarmForm({ farm, onDone }: Props) {
             placeholder="Ciudad / Región"
             color="warning"
           />
+          {farm && (
+            <div className="grid grid-cols-3 gap-3 mt-4">
+              <Input
+                type="number"
+                label="Lat"
+                labelPlacement="outside"
+                value={geoLat === '' ? '' : String(geoLat)}
+                onChange={(e) => setGeoLat(e.target.value === '' ? '' : Number(e.target.value))}
+                placeholder="Lat"
+                color="warning"
+              />
+              <Input
+                type="number"
+                label="Lng"
+                labelPlacement="outside"
+                value={geoLng === '' ? '' : String(geoLng)}
+                onChange={(e) => setGeoLng(e.target.value === '' ? '' : Number(e.target.value))}
+                placeholder="Lng"
+                color="warning"
+              />
+              <Input
+                type="number"
+                label="Zoom"
+                labelPlacement="outside"
+                value={geoZoom === '' ? '' : String(geoZoom)}
+                onChange={(e) => setGeoZoom(e.target.value === '' ? '' : Number(e.target.value))}
+                placeholder="Zoom"
+                color="warning"
+              />
+              <div className="col-span-3 -mt-2 text-xs text-gray-500">
+                Deja vacío Lat y Lng para eliminar la ubicación geográfica.
+              </div>
+            </div>
+          )}
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium">Descripción</label>
             <textarea

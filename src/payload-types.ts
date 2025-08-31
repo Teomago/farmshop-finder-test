@@ -344,6 +344,23 @@ export interface Farm {
   slug?: string | null;
   tagline?: string | null;
   location?: string | null;
+  /**
+   * Precise coordinates of the farm. Click map selector (coming soon) or enter manually. Leave empty if unknown.
+   */
+  geo?: {
+    /**
+     * Decimal latitude (WGS84). Example: 41.3874
+     */
+    lat?: number | null;
+    /**
+     * Decimal longitude (WGS84). Example: 2.1686
+     */
+    lng?: number | null;
+    /**
+     * Optional preferred zoom when centering on this farm.
+     */
+    zoom?: number | null;
+  };
   farmImage: string | Media;
   description?: {
     root: {
@@ -682,6 +699,13 @@ export interface FarmsSelect<T extends boolean = true> {
   slug?: T;
   tagline?: T;
   location?: T;
+  geo?:
+    | T
+    | {
+        lat?: T;
+        lng?: T;
+        zoom?: T;
+      };
   farmImage?: T;
   description?: T;
   products?:

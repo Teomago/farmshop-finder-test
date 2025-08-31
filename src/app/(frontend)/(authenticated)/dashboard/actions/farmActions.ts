@@ -22,6 +22,7 @@ interface FarmInput {
   description?: FarmDescription
   farmImage?: string
   products?: ProductEntryInput[]
+  geo?: { lat?: number | null; lng?: number | null; zoom?: number | null }
 }
 
 type CreateFarmData = {
@@ -32,6 +33,7 @@ type CreateFarmData = {
   description?: FarmDescription
   products?: Farm['products']
   owner: string
+  geo?: { lat?: number | null; lng?: number | null; zoom?: number | null }
 }
 
 type UpdateFarmData = CreateFarmData
@@ -59,6 +61,7 @@ export async function createFarm(data: FarmInput) {
         price: p.price,
       })) ?? null,
     owner: user.id as string,
+    geo: data.geo,
   }
   const created = await payload.create({ collection: 'farms', data: createData })
   revalidatePath('/dashboard')
@@ -97,6 +100,7 @@ export async function updateFarm(id: string, data: FarmInput) {
         price: p.price,
       })) ?? null,
     owner: ownerId as string,
+    geo: data.geo ?? (existing as Farm).geo,
   }
   const updated = await payload.update({ collection: 'farms', id, data: updateData })
   revalidatePath('/dashboard')

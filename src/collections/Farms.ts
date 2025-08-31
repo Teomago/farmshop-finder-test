@@ -127,6 +127,52 @@ export const Farms: CollectionConfig = {
     slug('name'),
     { name: 'tagline', label: 'Tagline', type: 'text' },
     { name: 'location', label: 'Location', type: 'text' },
+    {
+      name: 'geo',
+      label: 'Geolocation',
+      type: 'group',
+      admin: {
+        description:
+          'Precise coordinates of the farm. Click map selector (coming soon) or enter manually. Leave empty if unknown.',
+      },
+      fields: [
+        {
+          name: 'lat',
+          label: 'Latitude',
+          type: 'number',
+          min: -90,
+          max: 90,
+          admin: { description: 'Decimal latitude (WGS84). Example: 41.3874' },
+        },
+        {
+          name: 'lng',
+          label: 'Longitude',
+          type: 'number',
+          min: -180,
+          max: 180,
+          admin: { description: 'Decimal longitude (WGS84). Example: 2.1686' },
+        },
+        {
+          name: 'zoom',
+          label: 'Default Zoom',
+          type: 'number',
+          min: 0,
+          max: 22,
+          defaultValue: 10,
+          admin: { description: 'Optional preferred zoom when centering on this farm.' },
+        },
+      ],
+      validate: (val: unknown) => {
+        if (!val || typeof val !== 'object') return true
+        const geoVal = val as { lat?: unknown; lng?: unknown }
+        const hasLat = typeof geoVal.lat === 'number'
+        const hasLng = typeof geoVal.lng === 'number'
+        if ((hasLat && !hasLng) || (!hasLat && hasLng)) {
+          return 'Provide both latitude and longitude or leave both empty.'
+        }
+        return true
+      },
+    },
     { name: 'farmImage', label: 'Farm Image', type: 'upload', relationTo: 'media', required: true },
     { name: 'description', label: 'Description', type: 'richText' },
     {
