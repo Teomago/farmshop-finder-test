@@ -3,13 +3,15 @@
 ## Tabla de Contenido
 1. [Arquitectura del Sistema de Auth](#arquitectura-del-sistema-de-auth)
 2. [Paso 1: Configuración de Colecciones Auth en Payload](#paso-1-configuración-de-colecciones-auth-en-payload)
-3. [Paso 2: Implementación de Server Actions](#paso-2-implementación-de-server-actions)
-4. [Paso 3: Hook de Autenticación en Frontend](#paso-3-hook-de-autenticación-en-frontend)
-5. [Paso 4: Componentes de Login/Logout](#paso-4-componentes-de-loginlogout)
-6. [Paso 5: Protección de Rutas](#paso-5-protección-de-rutas)
-7. [Paso 6: Control de Acceso por Roles](#paso-6-control-de-acceso-por-roles)
-8. [Ejemplos Prácticos de Implementación](#ejemplos-prácticos-de-implementación)
-9. [Patrones de Seguridad](#patrones-de-seguridad)
+3. [Paso 2: Configuración del Email Adapter](#paso-2-configuración-del-email-adapter)
+4. [Paso 3: Implementación de Recuperación de Contraseña](#paso-3-implementación-de-recuperación-de-contraseña)
+5. [Paso 4: Implementación de Server Actions](#paso-4-implementación-de-server-actions)
+6. [Paso 5: Hook de Autenticación en Frontend](#paso-5-hook-de-autenticación-en-frontend)
+7. [Paso 6: Componentes de Login/Logout](#paso-6-componentes-de-loginlogout)
+8. [Paso 7: Protección de Rutas](#paso-7-protección-de-rutas)
+9. [Paso 8: Control de Acceso por Roles](#paso-8-control-de-acceso-por-roles)
+10. [Ejemplos Prácticos de Implementación](#ejemplos-prácticos-de-implementación)
+11. [Patrones de Seguridad](#patrones-de-seguridad)
 
 ---
 
@@ -138,9 +140,635 @@ export default buildConfig({
 
 ---
 
-## Paso 2: Implementación de Server Actions
+## Paso 2: Configuración del Email Adapter
 
-### 2.1 Server Action de Login
+### 4.1 Creación del Brevo Adapter
+
+**Archivo**: `src/utils/brevoAdapter.ts`
+
+```typescript
+import { EmailAdapter } from 'payload'
+import axios from 'axios'
+
+interface BrevoEmailOptions {
+  apiKey?: string
+  sender?: {
+    name: string
+    email: string
+  }
+}
+
+interface SendEmailParams {
+  to: string
+  subject: string
+  html: string
+  text?: string
+}
+
+export default function brevoAdapter(options: BrevoEmailOptions = {}): EmailAdapter {
+  const {
+    apiKey = process.env.BREVO_API_KEY,
+    sender = {
+      name: process.env.BREVO_SENDER_NAME || 'Farmshop Finder',
+      email: process.env.BREVO_SENDER_EMAIL || 'noreply@farmshop-finder.com',
+    },
+  } = options
+
+  return {
+    name: 'brevo',
+    
+    async sendEmail({ to, subject, html, text }: SendEmailParams) {
+      try {
+        const response = await axios.post(
+          'https://api.brevo.com/v3/smtp/email',
+          {
+            sender,
+            to: [{ email: to }],
+            subject,
+            htmlContent: html,
+            textContent: text || html.replace(/<[^>]*>/g, ''), // Strip HTML for text
+          },
+          {
+            headers: {
+              'api-key': apiKey,
+              'Content-Type': 'application/json',
+            },
+          }
+        )
+
+        console.log('✅ Email sent successfully via Brevo:', response.data)
+        return true
+      } catch (error) {
+        console.error('❌ Failed to send email via Brevo:', error)
+        throw error
+      }
+    },
+  }
+}
+```
+
+**¿Por qué Brevo?**
+- **Confiabilidad**: Alto rate de entrega de emails
+- **API Simple**: Integración directa sin complicaciones
+- **Costo-efectivo**: Plan gratuito generoso para desarrollo
+- **Escalabilidad**: Fácil upgrade cuando la app crezca
+
+### 4.2 Variables de Entorno Requeridas
+
+**Archivo**: `.env.local`
+
+```bash
+# Brevo Email Configuration
+BREVO_API_KEY=xkeysib-your-brevo-api-key-here
+BREVO_SENDER_NAME="Farmshop Finder"
+BREVO_SENDER_EMAIL="noreply@farmshop-finder.com"
+
+# Payload Auth Configuration
+PAYLOAD_SECRET=your-super-secret-jwt-secret-32-chars
+PAYLOAD_AUTH_EXPIRE=7d
+
+# Frontend URLs (for email links)
+NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:3000
+```
+
+**⚠️ Importante**: 
+- El email sender debe estar verificado en tu cuenta de Brevo
+- PAYLOAD_SECRET debe tener al menos 32 caracteres aleatorios
+- En producción, usar HTTPS para FRONTEND_URL
+
+### 4.3 Integración en Payload Config
+
+**Archivo**: `src/payload.config.ts`
+
+```typescript
+import brevoAdapter from './utils/brevoAdapter'
+
+export default buildConfig({
+  // ... otras configuraciones
+  
+  email: brevoAdapter({
+    // Configuración personalizada (opcional)
+    sender: {
+      name: 'Tu App Name',
+      email: 'noreply@tu-dominio.com',
+    },
+  }),
+  
+  // ... resto de configuración
+})
+```
+
+### 4.4 Testeo del Email Adapter
+
+**Archivo**: `src/scripts/test-email.ts` (para desarrollo)
+
+```typescript
+import { getPayload } from 'payload'
+import config from '../payload.config'
+
+async function testEmail() {
+  const payload = await getPayload({ config })
+  
+  try {
+    await payload.sendEmail({
+      to: 'test@ejemplo.com',
+      subject: 'Test Email from Farmshop Finder',
+      html: `
+        <h1>¡Email funcionando correctamente!</h1>
+        <p>Este es un email de prueba desde tu aplicación.</p>
+        <p>Si recibes este mensaje, la configuración está correcta.</p>
+      `,
+    })
+    
+    console.log('✅ Email de prueba enviado exitosamente')
+  } catch (error) {
+    console.error('❌ Error enviando email de prueba:', error)
+  }
+}
+
+// Ejecutar: node -r ts-node/register src/scripts/test-email.ts
+testEmail()
+```
+
+---
+
+## Paso 7: Implementación de Recuperación de Contraseña
+
+### 3.1 Server Action para Solicitar Reset
+
+**Archivo**: `src/app/(frontend)/forgot-password/actions/forgotPassword.ts`
+
+```typescript
+'use server'
+
+import { getPayload } from 'payload'
+import config from '@/payload.config'
+
+interface ForgotPasswordParams {
+  email: string
+}
+
+export interface ForgotPasswordResponse {
+  success: boolean
+  message: string
+}
+
+export async function forgotPassword({ 
+  email 
+}: ForgotPasswordParams): Promise<ForgotPasswordResponse> {
+  const payload = await getPayload({ config })
+  
+  try {
+    // 1. Verificar que el usuario existe
+    const users = await payload.find({
+      collection: 'users',
+      where: { email: { equals: email } },
+      limit: 1,
+    })
+    
+    if (users.docs.length === 0) {
+      // Por seguridad, no revelamos si el email existe o no
+      return { 
+        success: true, 
+        message: 'Si el email existe, recibirás instrucciones para resetear tu contraseña.' 
+      }
+    }
+    
+    // 2. Generar token de reset de contraseña
+    const result = await payload.forgotPassword({
+      collection: 'users',
+      data: { email },
+    })
+    
+    return { 
+      success: true, 
+      message: 'Si el email existe, recibirás instrucciones para resetear tu contraseña.' 
+    }
+    
+  } catch (error) {
+    console.error('Error en forgot password:', error)
+    return { 
+      success: false, 
+      message: 'Error interno del servidor. Intenta nuevamente.' 
+    }
+  }
+}
+```
+
+### 3.2 Configuración de Templates de Email
+
+**Archivo**: `src/collections/Users.ts` (expandido)
+
+```typescript
+import type { CollectionConfig } from 'payload'
+
+export const Users: CollectionConfig = {
+  slug: 'users',
+  auth: {
+    // Configuración de autenticación avanzada
+    tokenExpiration: 60 * 60 * 24 * 7, // 7 días en segundos
+    maxLoginAttempts: 5,
+    lockTime: 60 * 60 * 2, // 2 horas
+    
+    // Templates de email personalizados
+    forgotPassword: {
+      generateEmailHTML: ({ token, user }) => {
+        const resetURL = `${process.env.FRONTEND_URL}/reset-password?token=${token}`
+        
+        return `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <title>Resetear Contraseña - Farmshop Finder</title>
+              <style>
+                body { font-family: Arial, sans-serif; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: #16a34a; color: white; padding: 20px; text-align: center; }
+                .content { padding: 20px; background: #f9f9f9; }
+                .button { 
+                  display: inline-block; 
+                  background: #16a34a; 
+                  color: white; 
+                  padding: 12px 24px; 
+                  text-decoration: none; 
+                  border-radius: 6px;
+                  margin: 20px 0;
+                }
+                .footer { padding: 20px; text-align: center; color: #666; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>🌾 Farmshop Finder</h1>
+                </div>
+                <div class="content">
+                  <h2>Resetear tu contraseña</h2>
+                  <p>Hola${user.name ? ` ${user.name}` : ''},</p>
+                  <p>Recibiste este email porque solicitaste resetear tu contraseña en Farmshop Finder.</p>
+                  <p>Haz clic en el botón de abajo para crear una nueva contraseña:</p>
+                  <a href="${resetURL}" class="button">Resetear Contraseña</a>
+                  <p>O copia y pega este enlace en tu navegador:</p>
+                  <p style="word-break: break-all; color: #666;">${resetURL}</p>
+                  <p><strong>Este enlace expira en 1 hora por seguridad.</strong></p>
+                  <p>Si no solicitaste este cambio, puedes ignorar este email de forma segura.</p>
+                </div>
+                <div class="footer">
+                  <p>© 2024 Farmshop Finder. Conectando agricultura local.</p>
+                </div>
+              </div>
+            </body>
+          </html>
+        `
+      },
+      
+      generateEmailSubject: () => 'Resetear tu contraseña - Farmshop Finder',
+    },
+    
+    // Configuración de verificación de email (opcional)
+    verify: {
+      generateEmailHTML: ({ token, user }) => {
+        const verifyURL = `${process.env.FRONTEND_URL}/verify-email?token=${token}`
+        
+        return `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <title>Verificar Email - Farmshop Finder</title>
+            </head>
+            <body style="font-family: Arial, sans-serif;">
+              <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h1 style="color: #16a34a;">🌾 Bienvenido a Farmshop Finder</h1>
+                <p>Hola${user.name ? ` ${user.name}` : ''},</p>
+                <p>¡Gracias por registrarte! Por favor verifica tu email haciendo clic en el enlace de abajo:</p>
+                <a href="${verifyURL}" style="display: inline-block; background: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+                  Verificar Email
+                </a>
+                <p>O copia este enlace: ${verifyURL}</p>
+              </div>
+            </body>
+          </html>
+        `
+      },
+      
+      generateEmailSubject: () => 'Verifica tu email - Farmshop Finder',
+    },
+  },
+  admin: {
+    useAsTitle: 'email',
+    description: 'Usuarios de la aplicación (Farmers y Customers).',
+  },
+  fields: [
+    {
+      name: 'role',
+      label: 'Role',
+      type: 'select',
+      options: [
+        { label: 'Farmer', value: 'farmer' },
+        { label: 'Customer', value: 'customer' },
+      ],
+      required: true,
+    },
+    {
+      name: 'name',
+      label: 'Name',
+      type: 'text',
+      required: true,
+    },
+    // Email y password añadidos automáticamente por auth: true
+  ],
+}
+```
+
+### 3.3 Página de Reset Password
+
+**Archivo**: `src/app/(frontend)/reset-password/page.tsx`
+
+```tsx
+'use client'
+
+import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Button } from '@heroui/button'
+import { Input } from '@heroui/input'
+import { Card, CardBody, CardHeader } from '@heroui/card'
+import { resetPassword } from './actions/resetPassword'
+
+export default function ResetPasswordPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const token = searchParams.get('token')
+  
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [isSuccess, setIsSuccess] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!token) {
+      setMessage('Token inválido o faltante.')
+      return
+    }
+    
+    if (password !== confirmPassword) {
+      setMessage('Las contraseñas no coinciden.')
+      return
+    }
+    
+    if (password.length < 8) {
+      setMessage('La contraseña debe tener al menos 8 caracteres.')
+      return
+    }
+    
+    setIsLoading(true)
+    
+    try {
+      const result = await resetPassword({ token, password })
+      
+      if (result.success) {
+        setIsSuccess(true)
+        setMessage('Contraseña actualizada exitosamente. Redirigiendo al login...')
+        setTimeout(() => router.push('/login'), 3000)
+      } else {
+        setMessage(result.error || 'Error reseteando la contraseña.')
+      }
+    } catch (error) {
+      setMessage('Error interno. Intenta nuevamente.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (!token) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="max-w-md w-full">
+          <CardBody>
+            <p className="text-red-500">Token inválido o faltante.</p>
+          </CardBody>
+        </Card>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <Card className="max-w-md w-full">
+        <CardHeader>
+          <h1 className="text-2xl font-bold">Resetear Contraseña</h1>
+        </CardHeader>
+        <CardBody>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              type="password"
+              label="Nueva Contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={8}
+              placeholder="Mínimo 8 caracteres"
+            />
+            
+            <Input
+              type="password"
+              label="Confirmar Contraseña"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              minLength={8}
+              placeholder="Repetir la contraseña"
+            />
+            
+            <Button
+              type="submit"
+              color="primary"
+              fullWidth
+              isLoading={isLoading}
+              disabled={!password || !confirmPassword}
+            >
+              {isLoading ? 'Actualizando...' : 'Actualizar Contraseña'}
+            </Button>
+            
+            {message && (
+              <p className={isSuccess ? 'text-green-600' : 'text-red-500'}>
+                {message}
+              </p>
+            )}
+          </form>
+        </CardBody>
+      </Card>
+    </div>
+  )
+}
+```
+
+**Archivo**: `src/app/(frontend)/reset-password/actions/resetPassword.ts`
+
+```typescript
+'use server'
+
+import { getPayload } from 'payload'
+import config from '@/payload.config'
+
+interface ResetPasswordParams {
+  token: string
+  password: string
+}
+
+export interface ResetPasswordResponse {
+  success: boolean
+  error?: string
+}
+
+export async function resetPassword({ 
+  token, 
+  password 
+}: ResetPasswordParams): Promise<ResetPasswordResponse> {
+  const payload = await getPayload({ config })
+  
+  try {
+    // Resetear contraseña usando el token
+    const result = await payload.resetPassword({
+      collection: 'users',
+      data: { token, password },
+    })
+    
+    return { success: true }
+    
+  } catch (error) {
+    console.error('Error resetting password:', error)
+    
+    // Manejar diferentes tipos de errores
+    if (error instanceof Error) {
+      if (error.message.includes('token')) {
+        return { success: false, error: 'Token inválido o expirado.' }
+      }
+      if (error.message.includes('password')) {
+        return { success: false, error: 'Contraseña no válida.' }
+      }
+    }
+    
+    return { 
+      success: false, 
+      error: 'Error interno del servidor. Intenta nuevamente.' 
+    }
+  }
+}
+```
+
+### 3.4 Integración con Componente de Login
+
+**Expansión de**: `src/app/(frontend)/login/page.tsx`
+
+```tsx
+// Agregar este enlace en el formulario de login
+<div className="text-center mt-4">
+  <Link 
+    href="/forgot-password" 
+    className="text-sm text-blue-600 hover:underline"
+  >
+    ¿Olvidaste tu contraseña?
+  </Link>
+</div>
+```
+
+**Archivo**: `src/app/(frontend)/forgot-password/page.tsx`
+
+```tsx
+'use client'
+
+import { useState } from 'react'
+import { Button } from '@heroui/button'
+import { Input } from '@heroui/input'
+import { Card, CardBody, CardHeader } from '@heroui/card'
+import { Link } from '@heroui/link'
+import { forgotPassword } from './actions/forgotPassword'
+
+export default function ForgotPasswordPage() {
+  const [email, setEmail] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [isSubmitted, setIsSubmitted] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    
+    try {
+      const result = await forgotPassword({ email })
+      setMessage(result.message)
+      setIsSubmitted(true)
+    } catch (error) {
+      setMessage('Error enviando el email. Intenta nuevamente.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <Card className="max-w-md w-full">
+        <CardHeader>
+          <h1 className="text-2xl font-bold">Recuperar Contraseña</h1>
+        </CardHeader>
+        <CardBody>
+          {!isSubmitted ? (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <p className="text-gray-600 text-sm">
+                Ingresa tu email y te enviaremos instrucciones para resetear tu contraseña.
+              </p>
+              
+              <Input
+                type="email"
+                label="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="tu@email.com"
+              />
+              
+              <Button
+                type="submit"
+                color="primary"
+                fullWidth
+                isLoading={isLoading}
+                disabled={!email}
+              >
+                {isLoading ? 'Enviando...' : 'Enviar Instrucciones'}
+              </Button>
+            </form>
+          ) : (
+            <div className="text-center space-y-4">
+              <p className="text-green-600">{message}</p>
+              <p className="text-sm text-gray-600">
+                Revisa tu bandeja de entrada y spam.
+              </p>
+            </div>
+          )}
+          
+          <div className="text-center mt-6">
+            <Link href="/login" className="text-sm text-blue-600 hover:underline">
+              ← Volver al Login
+            </Link>
+          </div>
+        </CardBody>
+      </Card>
+    </div>
+  )
+}
+```
+
+---
+
+## Paso 8: Implementación de Server Actions
+
+### 4.1 Server Action de Login
 
 **Archivo**: `src/app/(frontend)/login/actions/login.ts`
 
@@ -210,7 +838,7 @@ export async function login({ email, password }: LoginParams): Promise<LoginResp
 - **Tipado fuerte**: Interfaces claras para entrada y salida
 - **Manejo de errores**: Respuestas consistentes
 
-### 2.2 Server Action de Logout
+### 4.2 Server Action de Logout
 
 **Archivo**: `src/app/(frontend)/login/actions/logout.ts`
 
@@ -230,7 +858,7 @@ export async function logout(): Promise<void> {
 - Payload maneja automáticamente la invalidación del token
 - Simple = menos puntos de fallo
 
-### 2.3 Server Action de Registro (Opcional)
+### 4.3 Server Action de Registro (Opcional)
 
 **Archivo**: `src/app/(frontend)/login/actions/register.ts`
 
@@ -273,7 +901,7 @@ export async function register(params: RegisterParams) {
 
 ---
 
-## Paso 3: Hook de Autenticación en Frontend
+## Paso 7: Hook de Autenticación en Frontend
 
 ### 3.1 Hook useAuth con React Query
 
@@ -343,7 +971,7 @@ export async function GET() {
 
 ---
 
-## Paso 4: Componentes de Login/Logout
+## Paso 8: Componentes de Login/Logout
 
 ### 4.1 Componente de Login
 
@@ -475,7 +1103,7 @@ export default function LogoutButton() {
 
 ---
 
-## Paso 5: Protección de Rutas
+## Paso 7: Protección de Rutas
 
 ### 5.1 Protección en Server Components
 
@@ -570,7 +1198,7 @@ export default function ProtectedWrapper({
 
 ---
 
-## Paso 6: Control de Acceso por Roles
+## Paso 8: Control de Acceso por Roles
 
 ### 6.1 Funciones de Control de Acceso
 
@@ -742,7 +1370,7 @@ const { user } = useAuth()
 if (!user || user.role !== 'farmer') return <Unauthorized />
 ```
 
-### 2. Sanitización de Datos
+### 4. Sanitización de Datos
 ```typescript
 // En server actions
 export async function updateFarm(id: string, data: any) {
