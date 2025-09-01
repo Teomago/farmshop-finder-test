@@ -42,14 +42,44 @@ p {
   @apply text-xl;
 }
 
-.richTextSt h1,
+/* .richTextSt h1,
 h2,
 h3,
 h4,
 h5,
 h6,
 p {
-  @apply text-[var(--carrot)];
+  @apply text-[var(--carrot)]!;
+} */
+
+.richTextSt {
+  h1 {
+    @apply text-[var(--carrot)];
+  }
+
+  h2 {
+    @apply text-[var(--carrot)];
+  }
+
+  h3 {
+    @apply text-[var(--carrot)];
+  }
+
+  h4 {
+    @apply text-[var(--carrot)];
+  }
+
+  h5 {
+    @apply text-[var(--carrot)];
+  }
+
+  h6 {
+    @apply text-[var(--carrot)];
+  }
+
+  p {
+    @apply text-[var(--barn)];
+  }
 }
 
 .farmDetailRichText h1,
