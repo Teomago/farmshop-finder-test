@@ -1,9 +1,9 @@
 {
-  "buildCommand": "pnpm run build",
+  "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "framework": "nextjs",
-  "installCommand": "pnpm install",
-  "devCommand": "pnpm run dev",
+  "installCommand": "npm install",
+  "devCommand": "npm run dev",
   "regions": ["lhr1"],
   "functions": {
     "app/**/*.ts": {
@@ -11,9 +11,62 @@
     },
     "app/**/*.tsx": {
       "maxDuration": 30
+    },
+    "app/api/**/*.ts": {
+      "maxDuration": 60
     }
   },
   "env": {
     "NODE_OPTIONS": "--no-deprecation --max-old-space-size=8000"
-  }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/static/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/admin/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?!.*\\.vercel\\.app$).*"
+        }
+      ],
+      "destination": "/admin/:path*",
+      "permanent": false
+    }
+  ]
 }
